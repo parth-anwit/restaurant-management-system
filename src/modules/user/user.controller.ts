@@ -17,7 +17,6 @@ import { JwtUserAuthGuard } from '../auth/guards/jwt-user-auth.guard';
 export class UserController {
   private readonly logger = new Logger(UserController.name);
 
-  // GET /user/me
   @HttpCode(200)
   @ApiOkResponse({
     type: GetProfileResDto,
