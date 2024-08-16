@@ -13,6 +13,7 @@ import { AppService } from './app.service';
 import { configuration } from './config/index';
 
 // Import filters
+import { AccessModule } from './modules/access/access.module';
 import {
   AllExceptionsFilter,
   BadRequestExceptionFilter,
@@ -22,6 +23,7 @@ import {
   ValidationExceptionFilter,
 } from './filters';
 import { AuthModule } from './modules/auth/auth.module';
+import { RestaurantModule } from './modules/restaurant/restaurant.module';
 import { UserModule } from './modules/user/user.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
 
@@ -51,6 +53,8 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     AuthModule,
     UserModule,
     WorkspaceModule,
+    AccessModule,
+    RestaurantModule,
   ],
   controllers: [AppController], // Define the application's controller
   providers: [
