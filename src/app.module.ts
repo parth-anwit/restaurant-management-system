@@ -23,6 +23,11 @@ import {
   ValidationExceptionFilter,
 } from './filters';
 import { AuthModule } from './modules/auth/auth.module';
+import { BillModule } from './modules/bill/bill.module';
+import { CustomerModule } from './modules/customer/customer.module';
+import { MealCategoryModule } from './modules/meal-category/meal-category.module';
+import { MealModule } from './modules/meal/meal.module';
+import { OrderModule } from './modules/order/order.module';
 import { RestaurantModule } from './modules/restaurant/restaurant.module';
 import { UserModule } from './modules/user/user.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
@@ -55,6 +60,11 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     WorkspaceModule,
     AccessModule,
     RestaurantModule,
+    MealCategoryModule,
+    MealModule,
+    CustomerModule,
+    OrderModule,
+    BillModule,
   ],
   controllers: [AppController], // Define the application's controller
   providers: [

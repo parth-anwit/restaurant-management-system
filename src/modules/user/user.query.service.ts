@@ -1,8 +1,9 @@
 // Objective: Implement the user query service to handle the user queries
 // External dependencies
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 // Internal dependencies
+import { Types } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import { UserRepository } from './user.repository';
 
@@ -11,6 +12,7 @@ import { UserRepository } from './user.repository';
 // Shared dependencies
 import { Identifier } from '../../shared/types/schema.type';
 import { InternalServerErrorException } from '../../exceptions/internal-server-error.exception';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Injectable()
 export class UserQueryService {
@@ -38,6 +40,37 @@ export class UserQueryService {
   async create(user: User): Promise<UserDocument> {
     try {
       return await this.userRepository.create(user);
+    } catch (error) {
+      throw InternalServerErrorException.INTERNAL_SERVER_ERROR(error);
+    }
+  }
+
+  async update(id: Types.ObjectId, updateUserDto: UpdateUserDto) {
+    try {
+      const user = await this.userRepository.findById(id);
+
+      if (!user) {
+        throw new HttpException('user not found', 404);
+      }
+
+      return await this.userRepository.update(id, updateUserDto);
+    } catch (error) {
+      throw new HttpException(
+        {
+          status: HttpStatus,
+          error: `user is not found `,
+        },
+        HttpStatus.FORBIDDEN,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
+  async delete(id: Types.ObjectId) {
+    try {
+      return await this.userRepository.deleteUser(id);
     } catch (error) {
       throw InternalServerErrorException.INTERNAL_SERVER_ERROR(error);
     }

@@ -9,6 +9,7 @@ import { User, UserDocument } from './user.schema';
 
 // Shared dependencies
 import { DatabaseCollectionNames } from '../../shared/enums/db.enum';
+import { UpdateUserDto } from './dtos/update-user.dto';
 
 @Injectable()
 export class UserRepository {
@@ -38,7 +39,28 @@ export class UserRepository {
     return this.userModel.findOneAndUpdate(filter, update, options);
   }
 
-  async findByIdAndUpdate(id, update: UpdateQuery<UserDocument>, options: QueryOptions<UserDocument>): Promise<UserDocument | null> {
+  async findByIdAndUpdate(
+    id: Types.ObjectId,
+    update: UpdateQuery<UserDocument>,
+    options: QueryOptions<UserDocument>,
+  ): Promise<UserDocument | null> {
     return this.userModel.findByIdAndUpdate(id, update, options);
+  }
+
+  async deleteUser(id: Types.ObjectId) {
+    return this.userModel.deleteOne(id);
+  }
+
+  async update(id: Types.ObjectId, updateUserDto: UpdateUserDto) {
+    const user = await this.userModel.findByIdAndUpdate(
+      id,
+      {
+        $set: {
+          ...updateUserDto,
+        },
+      },
+      { new: true },
+    );
+    return user;
   }
 }
