@@ -3,7 +3,6 @@ import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { Controller, Delete, Get, HttpCode, Logger, Param, Patch, UseGuards } from '@nestjs/common';
 
 // Internal dependencies
-import { Types } from 'mongoose';
 
 import { GetProfileResDto } from './dtos';
 
@@ -39,17 +38,15 @@ export class UserController {
   }
 
   @Patch('/:id')
-  async updateUser(@Param('id') id: Types.ObjectId, updateUserDto: UpdateUserDto) {
+  async updateUser(@Param('id') id: string, updateUserDto: UpdateUserDto) {
     const data = await this.userService.update(id, updateUserDto);
 
     return { message: 'User update successfully', user: data };
   }
 
-  @Delete('/:id')
-  async deleteUser(@GetUser() user: UserDocument) {
-    const userId = user._id;
-
-    const data = await this.userService.delete(userId);
+  @Delete('me')
+  async deleteUser(@GetUser() user: string) {
+    const data = await this.userService.delete(user);
 
     return {
       message: 'User delete successfully',

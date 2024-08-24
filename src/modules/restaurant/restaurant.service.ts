@@ -2,8 +2,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 import mongoose from 'mongoose';
 
-import { User } from '../user/user.schema';
-
 import { CreateRestaurantDto } from './dtos/createDto';
 import { UpdateRestaurantDto } from './dtos/updateDto';
 
@@ -13,11 +11,9 @@ import { RestaurantRepository } from './restaurant.repository';
 export class RestaurantService {
   constructor(private restaurantRepo: RestaurantRepository) {}
 
-  async create(createRestaurant: CreateRestaurantDto, user: User) {
+  async create(createRestaurant: CreateRestaurantDto, user: string) {
     try {
-      const { name, location } = createRestaurant;
-
-      const data = await this.restaurantRepo.create(name, location, user);
+      const data = await this.restaurantRepo.create(createRestaurant, user);
 
       return { message: 'restaurant created successfully', data };
     } catch (error) {
@@ -37,19 +33,13 @@ export class RestaurantService {
   async get() {
     try {
       const data = await this.restaurantRepo.get();
+      if (data.length === 0) {
+        throw new HttpException('no restaurant found', 404);
+      }
 
       return { data };
     } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus,
-          error: `no restaurant found`,
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
+      throw new Error(error);
     }
   }
 

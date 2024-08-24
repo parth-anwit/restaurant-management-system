@@ -47,11 +47,18 @@ export class UserRepository {
     return this.userModel.findByIdAndUpdate(id, update, options);
   }
 
-  async deleteUser(id: Types.ObjectId) {
-    return this.userModel.deleteOne(id);
+  async deleteUser(userId: string) {
+    const data = await this.userModel.findOneAndDelete({ _id: userId });
+
+    return data;
   }
 
-  async update(id: Types.ObjectId, updateUserDto: UpdateUserDto) {
+  async deleteUserByResource(userId: string) {
+    const data = await this.userModel.findOneAndDelete({ _id: userId });
+    return data;
+  }
+
+  async update(id: string, updateUserDto: UpdateUserDto) {
     const user = await this.userModel.findByIdAndUpdate(
       id,
       {

@@ -3,7 +3,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
 // Internal dependencies
-import { Types } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 import { UserRepository } from './user.repository';
 
@@ -45,7 +44,7 @@ export class UserQueryService {
     }
   }
 
-  async update(id: Types.ObjectId, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       const user = await this.userRepository.findById(id);
 
@@ -68,9 +67,9 @@ export class UserQueryService {
     }
   }
 
-  async delete(id: Types.ObjectId) {
+  async delete(user: string) {
     try {
-      return await this.userRepository.deleteUser(id);
+      return await this.userRepository.deleteUser(user);
     } catch (error) {
       throw InternalServerErrorException.INTERNAL_SERVER_ERROR(error);
     }

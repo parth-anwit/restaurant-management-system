@@ -23,11 +23,15 @@ import {
   ValidationExceptionFilter,
 } from './filters';
 import { AuthModule } from './modules/auth/auth.module';
-import { BillModule } from './modules/bill/bill.module';
-import { CustomerModule } from './modules/customer/customer.module';
-import { MealCategoryModule } from './modules/meal-category/meal-category.module';
-import { MealModule } from './modules/meal/meal.module';
-import { OrderModule } from './modules/order/order.module';
+import { BillModule } from './modules/order-management/bill/bill.module';
+import { CustomerManagementModule } from './modules/customer-management/customer-management.module';
+import { CustomerModule } from './modules/customer-management/customer/customer.module';
+import { MealCategoryModule } from './modules/meal-management/meal-category/meal-category.module';
+import { MealManagementModule } from './modules/meal-management/meal-management.module';
+import { MealModule } from './modules/meal-management/meal/meal.module';
+import { OrderManagementModule } from './modules/order-management/order-management.module';
+import { OrderModule } from './modules/order-management/order/order.module';
+import { ResourceModule } from './modules/resource/resource.module';
 import { RestaurantModule } from './modules/restaurant/restaurant.module';
 import { UserModule } from './modules/user/user.module';
 import { WorkspaceModule } from './modules/workspace/workspace.module';
@@ -65,6 +69,10 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     CustomerModule,
     OrderModule,
     BillModule,
+    MealManagementModule,
+    OrderManagementModule,
+    ResourceModule,
+    CustomerManagementModule,
   ],
   controllers: [AppController], // Define the application's controller
   providers: [

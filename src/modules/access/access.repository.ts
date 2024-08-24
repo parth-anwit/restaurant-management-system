@@ -1,7 +1,7 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
 
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import { Access } from './access.schema';
 
@@ -14,10 +14,10 @@ export class AccessRepository {
     newAccess.save();
   }
 
-  async find(restaurantId: string, userId: string) {
+  async find(restaurantId: Types.ObjectId, user: string) {
     const query = {
       restaurantId,
-      userId,
+      user,
     };
 
     const data = await this.AccessModule.findOne(query);
@@ -25,13 +25,20 @@ export class AccessRepository {
     return data;
   }
 
-  //   async deleteAccessByUserId(userId: string | Types.ObjectId) {
-  //     return await this.accessModule.deleteMany({ userId: userId });
-  //   }
+  async getUserAccess(userId: string) {
+    const data = await this.AccessModule.find({ userId });
+    return data;
+  }
 
-  //   async deleteAccessByRestaurantId(restaurantId: string) {
-  //     return await this.accessModule.deleteMany({ restaurantId: restaurantId });
-  //   }
+  async deleteAccessByUserId(user_id: string) {
+    const data = await this.AccessModule.deleteMany({ user: user_id });
+    return data;
+  }
+
+  async deleteAccessByRestaurantId(restaurantId: string) {
+    const data = await this.AccessModule.deleteMany({ restaurantId });
+    return data;
+  }
 
   async delete(id: string) {
     const data = await this.AccessModule.findByIdAndDelete(id);

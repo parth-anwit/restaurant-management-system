@@ -15,7 +15,7 @@ export class Workspace {
     example: '507f191e810c19729de860ea',
   })
   @Prop({
-    type: MongooseSchema.Types.ObjectId,
+    type: Types.ObjectId,
     default: () => new Types.ObjectId(),
   })
   _id?: Types.ObjectId;

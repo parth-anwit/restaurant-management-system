@@ -2,8 +2,6 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UsePipes,
 
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { User } from '../user/user.schema';
-
 import { CreateRestaurantDto } from './dtos/createDto';
 
 import { UpdateRestaurantDto } from './dtos/updateDto';
@@ -22,7 +20,7 @@ export class RestaurantController {
 
   @Post()
   @UsePipes(new ValidationPipe())
-  async create(@Body() createRestaurantDto: CreateRestaurantDto, @GetUser() user: User) {
+  async create(@Body() createRestaurantDto: CreateRestaurantDto, @GetUser() user: string) {
     const data = this.restaurantService.create(createRestaurantDto, user);
     return data;
   }

@@ -3,21 +3,23 @@ import { Document, Schema as MongooseSchema, Types } from 'mongoose';
 import { Optional } from '@nestjs/common';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-export type AccessDocument = Access & Document;
-
+export type MealDocument = Meal & Document;
 @Schema()
-export class Access {
+export class Meal {
   @Optional()
   _id?: Types.ObjectId;
 
-  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'User' })
-  user: Types.ObjectId;
+  @Prop({ required: true })
+  name: string;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Restaurant' })
   restaurant: Types.ObjectId;
 
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'MealCategory' })
+  mealCategory: Types.ObjectId;
+
   @Prop({ required: true })
-  role: string;
+  money: number;
 }
 
-export const accessSchema = SchemaFactory.createForClass(Access);
+export const mealSchema = SchemaFactory.createForClass(Meal);

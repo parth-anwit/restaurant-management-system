@@ -6,6 +6,5 @@ export const GetUser = createParamDecorator((data: unknown, ctx: ExecutionContex
   if (!request.user) {
     throw new UnauthorizedException();
   }
-
   return request.user;
 });

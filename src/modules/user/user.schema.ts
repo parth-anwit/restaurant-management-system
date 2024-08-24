@@ -3,6 +3,8 @@ import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
+import { Optional } from '@nestjs/common';
+
 import { DatabaseCollectionNames } from '../../shared/enums';
 import { Identifier } from '../../shared/types';
 
@@ -16,10 +18,7 @@ export class User {
     description: 'The unique identifier of the user',
     example: '643405452324db8c464c0584',
   })
-  @Prop({
-    type: MongooseSchema.Types.ObjectId,
-    default: () => new Types.ObjectId(),
-  })
+  @Optional()
   _id?: Types.ObjectId;
 
   // email is the unique identifier of the user
