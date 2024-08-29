@@ -1,8 +1,8 @@
 // Purpose: User repository for user module.
 // External dependencies
 import { FilterQuery, Model, QueryOptions, Types, UpdateQuery } from 'mongoose';
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Injectable } from '@nestjs/common';
 
 // Internal dependencies
 import { User, UserDocument } from './user.schema';
@@ -55,6 +55,9 @@ export class UserRepository {
 
   async deleteUserByResource(userId: string) {
     const data = await this.userModel.findOneAndDelete({ _id: userId });
+    if (!data) {
+      throw new HttpException('no user delete with this userId', 404);
+    }
     return data;
   }
 

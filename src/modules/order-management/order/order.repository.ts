@@ -2,7 +2,7 @@ import mongoose, { Model, Types } from 'mongoose';
 
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 
 import { CreateOrderDto } from './dtos/create.dto';
 
@@ -52,6 +52,9 @@ export class OrderRepository {
 
   async deleteOrderByRestaurantId(resId: string) {
     const data = await this.OrderModule.deleteMany({ restaurant: resId });
+    if (data.deletedCount === 0) {
+      throw new HttpException('no order found with this restaurantId', 404);
+    }
     return data;
   }
 

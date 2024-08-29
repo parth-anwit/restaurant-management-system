@@ -132,6 +132,9 @@ export class BillRepository {
 
   async deleteBillByRestaurantId(resId: string) {
     const data = await this.BillModule.deleteMany({ restaurant: resId });
+    if (data.deletedCount === 0) {
+      throw new HttpException('no bill found with this restaurantId', 404);
+    }
     return data;
   }
 

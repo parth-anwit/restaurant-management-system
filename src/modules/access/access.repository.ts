@@ -1,5 +1,5 @@
+import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Injectable } from '@nestjs/common';
 
 import { Model, Types } from 'mongoose';
 
@@ -32,6 +32,9 @@ export class AccessRepository {
 
   async deleteAccessByRestaurantId(restaurantId: string) {
     const data = await this.AccessModule.deleteMany({ restaurant: restaurantId });
+    if (data.deletedCount === 0) {
+      throw new HttpException('no access found with this restaurantId', 404);
+    }
     return data;
   }
 

@@ -41,10 +41,9 @@ export class ResourceService {
 
     const user = await this.accessRepository.getUserAccess(userId);
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const x of user) {
-      this.deleteRestaurantSubPart(x.restaurant.toString());
-    }
+    user.forEach((item) => {
+      this.deleteRestaurantSubPart(item.restaurant.toString());
+    });
 
     await this.userRepository.deleteUserByResource(userId);
 
