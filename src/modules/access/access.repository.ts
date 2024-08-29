@@ -14,13 +14,8 @@ export class AccessRepository {
     newAccess.save();
   }
 
-  async find(restaurantId: Types.ObjectId, user: string) {
-    const query = {
-      restaurantId,
-      user,
-    };
-
-    const data = await this.AccessModule.findOne(query);
+  async find(restaurantId: Types.ObjectId, userId: string) {
+    const data = await this.AccessModule.findOne({ restaurant: restaurantId, user: userId });
 
     return data;
   }
@@ -36,7 +31,7 @@ export class AccessRepository {
   }
 
   async deleteAccessByRestaurantId(restaurantId: string) {
-    const data = await this.AccessModule.deleteMany({ restaurantId });
+    const data = await this.AccessModule.deleteMany({ restaurant: restaurantId });
     return data;
   }
 

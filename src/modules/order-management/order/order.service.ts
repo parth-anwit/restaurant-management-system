@@ -18,12 +18,6 @@ export class OrderService {
 
   async create(createDto: CreateOrderDto, restaurantId: Types.ObjectId, customer_id: string, bill_id: string) {
     try {
-      const validate = await this.orderRepository.checkParticularBillSession(restaurantId, bill_id);
-
-      if (validate) {
-        throw new HttpException('order is already present', 404);
-      }
-
       const data = await this.orderRepository.create(createDto, restaurantId, customer_id, bill_id);
 
       if (!data) {

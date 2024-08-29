@@ -86,7 +86,7 @@ export class BillRepository {
       });
 
       const finalTotal = total - (total * discount) / 100;
-      await this.BillModule.findOneAndUpdate(
+      const updateBill = await this.BillModule.findOneAndUpdate(
         { restaurant: restaurant_id, _id: bill_id },
         {
           $set: {
@@ -96,13 +96,7 @@ export class BillRepository {
           },
         },
       );
-
-      const populateCustomer = await this.BillModule.findOne({ restaurant: restaurant_id, customer: customer_id })
-        .select('_id')
-        .populate('customer')
-        .exec();
-
-      return populateCustomer;
+      return updateBill;
     }
     throw new HttpException('session is not end yet', 404);
   }
@@ -123,7 +117,9 @@ export class BillRepository {
   }
 
   async getBills(restaurantId: Types.ObjectId) {
-    const data = await this.BillModule.find({ restaurant: restaurantId }).exec();
+    const data = await this.BillModule.find({ restaurant: restaurantId })
+      .populate('restaurant', '-_id -__v')
+      .populate('customer', '-_id -__v -restaurant');
     return data;
   }
 

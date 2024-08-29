@@ -13,13 +13,13 @@ export class ResourceController {
 
   @UseGuards(ValidRestaurantGuard)
   @Delete('restaurant/:restaurantId')
-  async deleteRestaurantSubPart(@Param() restaurantId: string) {
+  async deleteRestaurantSubPart(@Param('restaurantId') restaurantId: string) {
     const data = await this.resourceService.deleteRestaurantSubPart(restaurantId);
     return data;
   }
 
   @Delete('user/:userId')
-  async deleteUserSubPart(@Param() userId: string) {
+  async deleteUserSubPart(@Param('userId') userId: string) {
     const data = await this.resourceService.deleteUserSubPart(userId);
     return data;
   }

@@ -1,13 +1,27 @@
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpException,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 
 import mongoose from 'mongoose';
 
 import { CreateMealCategoryDto } from './dtos/create.dto';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-user-auth.guard';
+import { MealCategoryRepository } from './meal-category.repository';
 import { MealCategoryService } from './meal-category.service';
-import { MealRepository } from '../meal/meal.repository';
+import { MealService } from '../meal/meal.service';
 import { UpdateMealCategoryDto } from './dtos/update.dto';
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
@@ -18,7 +32,8 @@ import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 export class MealCategoryController {
   constructor(
     private service: MealCategoryService,
-    private mealRepo: MealRepository,
+    private mealService: MealService,
+    private mealCategoryRepo: MealCategoryRepository,
   ) {}
 
   @Post()
@@ -36,10 +51,16 @@ export class MealCategoryController {
     return data;
   }
 
+  // get meals on mealCategory
+
   @Get(':id/meal')
   async getMealsOnMealCategory(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
     const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.mealRepo.getMealsOnMealCategory(restaurantId, id);
+    const findMealCategory = await this.mealCategoryRepo.getSpecific(restaurantId, id);
+    if (!findMealCategory) {
+      throw new HttpException('meal category not found', 404);
+    }
+    const data = await this.mealService.getMealsOnMealCategory(restaurantId, id);
     return data;
   }
 

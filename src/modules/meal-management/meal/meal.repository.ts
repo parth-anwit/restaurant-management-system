@@ -41,6 +41,7 @@ export class MealRepository {
 
   async getMealsOnMealCategory(restaurantId: Types.ObjectId, mealCategoryId: string) {
     const data = await this.MealModule.find({ restaurant: restaurantId, mealCategory: mealCategoryId });
+    console.log('data', data);
     return data;
   }
 

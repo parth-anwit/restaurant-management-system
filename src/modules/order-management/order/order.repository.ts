@@ -30,12 +30,6 @@ export class OrderRepository {
     return data.save();
   }
 
-  async checkParticularBillSession(restaurantId, id: string) {
-    const data = await this.OrderModule.findOne({ bill: id, restaurant: restaurantId });
-
-    return data;
-  }
-
   async getSpecific(restaurantId: Types.ObjectId, id: string) {
     const data = await this.OrderModule.findOne({ restaurant: restaurantId, _id: id });
     return data;

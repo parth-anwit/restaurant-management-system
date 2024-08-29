@@ -18,10 +18,10 @@ export class AccessService {
     };
   }
 
-  async find(restaurantId: Types.ObjectId, user: string) {
-    const data = await this.accessRepo.find(restaurantId, user);
+  async find(restaurantId: Types.ObjectId, userId: string) {
+    const data = await this.accessRepo.find(restaurantId, userId);
 
-    return { data };
+    return data;
   }
 
   async delete(id: string) {

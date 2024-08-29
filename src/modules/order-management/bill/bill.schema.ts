@@ -1,8 +1,9 @@
 import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 import { Optional } from '@nestjs/common';
 
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Customer } from '../../customer-management/customer/customer.schema';
 
 export type BillDocument = Bill & Document;
 
@@ -27,7 +28,7 @@ export class Bill {
   user: Types.ObjectId;
 
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: 'Customer' })
-  customer: Types.ObjectId;
+  customer: Types.ObjectId | Customer;
 
   @Optional()
   @Prop()

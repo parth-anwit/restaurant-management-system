@@ -63,6 +63,9 @@ export class MealService {
   async getMealsOnMealCategory(restaurantId: Types.ObjectId, mealCategoryId: string) {
     try {
       const data = await this.mealRepository.getMealsOnMealCategory(restaurantId, mealCategoryId);
+      if (data.length === 0) {
+        throw new HttpException('no meal found on this category', 404);
+      }
       return data;
     } catch (error) {
       throw new Error(error);
