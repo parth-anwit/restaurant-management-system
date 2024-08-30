@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
@@ -9,6 +9,7 @@ import { UpdateRestaurantDto } from './dtos/updateDto';
 import { GetUser } from '../auth/decorators/get-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-user-auth.guard';
 import { RestaurantService } from './restaurant.service';
+import { UserDocument } from '../user/user.schema';
 import { ValidRestaurantGuard } from '../auth/guards/valid-restaurant.guard';
 
 @Controller('restaurant')
@@ -18,39 +19,36 @@ import { ValidRestaurantGuard } from '../auth/guards/valid-restaurant.guard';
 export class RestaurantController {
   constructor(private restaurantService: RestaurantService) {}
 
+  @HttpCode(200)
   @Post()
   @UsePipes(new ValidationPipe())
-  async create(@Body() createRestaurantDto: CreateRestaurantDto, @GetUser() user: string) {
-    const data = this.restaurantService.create(createRestaurantDto, user);
+  async create(@GetUser() currentUser: UserDocument, @Body() createRestaurantDto: CreateRestaurantDto) {
+    const data = this.restaurantService.create(currentUser, createRestaurantDto);
     return data;
   }
 
-  @UseGuards(ValidRestaurantGuard)
+  @HttpCode(200)
   @Get()
-  async get() {
-    const data = await this.restaurantService.get();
+  async get(@GetUser() currentUser: UserDocument) {
+    const restaurant = await this.restaurantService.get(currentUser);
+
+    return restaurant;
+  }
+
+  @HttpCode(200)
+  @UseGuards(ValidRestaurantGuard)
+  @Get(':restaurantId')
+  async getSpecific(@Param('restaurantId') restaurantId: string) {
+    const data = await this.restaurantService.getSpecificRestaurant(restaurantId);
     return data;
   }
 
+  @HttpCode(200)
   @UseGuards(ValidRestaurantGuard)
-  @Get(':id')
-  async getSpecific(@Param('id') id: string) {
-    const data = await this.restaurantService.getSpecificRestaurant(id);
-    return data;
-  }
-
-  @UseGuards(ValidRestaurantGuard)
-  @Patch(':id')
+  @Patch(':restaurantId')
   @UsePipes(new ValidationPipe())
-  async update(@Param('id') res_id: string, @Body() updateRestaurantDto: UpdateRestaurantDto) {
-    const data = await this.restaurantService.update(res_id, updateRestaurantDto);
-    return data;
-  }
-
-  @UseGuards(ValidRestaurantGuard)
-  @Delete(':id')
-  async delete(@Param('id') id: string) {
-    const data = await this.restaurantService.delete(id);
+  async update(@Param('restaurantId') restaurantId: string, @Body() updateRestaurantDto: UpdateRestaurantDto) {
+    const data = await this.restaurantService.update(restaurantId, updateRestaurantDto);
     return data;
   }
 }

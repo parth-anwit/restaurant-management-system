@@ -1,5 +1,6 @@
-import { HttpException, Injectable } from '@nestjs/common';
-import mongoose, { Types } from 'mongoose';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
+import { idChecker } from '../../invalidIDChecker';
 
 import { CreateCustomerDto } from './dtos/create.dto';
 
@@ -11,124 +12,71 @@ import { CustomerRepository } from './customer.repository';
 export class CustomerService {
   constructor(private customerRepo: CustomerRepository) {}
 
-  async create(restaurantId: Types.ObjectId, createCustomerDto: CreateCustomerDto) {
-    try {
-      const findCustomer = await this.customerRepo.findByMobileNumber(createCustomerDto.mobile);
+  async create(restaurantId: string, createCustomerDto: CreateCustomerDto) {
+    const findCustomer = await this.customerRepo.findByMobileNumber(createCustomerDto.mobile);
 
-      if (findCustomer) {
-        throw new HttpException('customer is already present', 404);
-      }
-
-      const data = await this.customerRepo.create(restaurantId, createCustomerDto);
-      return {
-        message: 'customer create successfully',
-        customer: data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (findCustomer) {
+      throw new NotFoundException('customer is already present');
     }
+
+    const data = await this.customerRepo.create(restaurantId, createCustomerDto);
+    return {
+      message: 'customer create successfully',
+      customer: data,
+    };
   }
 
-  async get(restaurantId: Types.ObjectId) {
-    try {
-      const data = await this.customerRepo.get(restaurantId);
+  async get(restaurantId: string) {
+    const data = await this.customerRepo.get(restaurantId);
 
-      if (data.length === 0) {
-        throw new HttpException('no customer found', 404);
-      }
-
-      return {
-        customer: data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (data.length === 0) {
+      throw new NotFoundException('no customer found');
     }
+
+    return {
+      customer: data,
+    };
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('invalid id', 404);
-      }
+  async getSpecific(restaurantId: string, customerId: string) {
+    idChecker(customerId);
+    const customer = await this.customerRepo.getSpecific(restaurantId, customerId);
 
-      const customer = await this.customerRepo.getSpecific(restaurantId, id);
-
-      if (!customer) {
-        throw new HttpException('customer not found', 404);
-      }
-
-      return {
-        customer,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!customer) {
+      throw new NotFoundException('customer not found');
     }
+
+    return {
+      customer,
+    };
   }
 
-  async update(restaurantId: Types.ObjectId, id: string, updateDto: UpdateCustomerDto) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
+  async update(restaurantId: string, customerId: string, updateDto: UpdateCustomerDto) {
+    idChecker(customerId);
 
-      const customer = await this.customerRepo.getSpecific(restaurantId, id);
+    const updateCustomer = await this.customerRepo.update(restaurantId, customerId, updateDto);
 
-      if (!customer) {
-        throw new HttpException('customer not found', 404);
-      }
-
-      const updateCustomer = await this.customerRepo.update(restaurantId, id, updateDto);
-
-      if (!updateCustomer) {
-        throw new HttpException('error occur while update customer details', 404);
-      }
-
-      return {
-        message: 'customer details updated successfully',
-        updatedCustomer: updateCustomer,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!updateCustomer) {
+      throw new NotFoundException('error occur while update customer details');
     }
+
+    return {
+      message: 'customer details updated successfully',
+      updatedCustomer: updateCustomer,
+    };
   }
 
-  //   async deleteCustomerByRestaurantId(resId: string) {
-  //     const data = await this.customerRepo.deleteCustomerByRestaurantId(resId);
+  async delete(restaurantId: string, customerId: string) {
+    idChecker(customerId);
+    const deleteCustomer = await this.customerRepo.delete(restaurantId, customerId);
 
-  //     return {
-  //       message: 'customer delete by restaurantId',
-  //       data: data,
-  //     };
-  //   }
-
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('invalid id', 404);
-      }
-      const customer = await this.customerRepo.getSpecific(restaurantId, id);
-
-      if (!customer) {
-        throw new HttpException('customer not found', 404);
-      }
-
-      const deleteCustomer = await this.customerRepo.delete(restaurantId, id);
-
-      if (!deleteCustomer) {
-        throw new HttpException('error occur while delete customer', 404);
-      }
-
-      return {
-        message: 'customer delete successfully',
-        deleteCustomer,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!deleteCustomer) {
+      throw new NotFoundException('error occur while delete customer');
     }
-    // this.billService.deleteBillByCustomerId(id); (fix subDeleteTask)
-    // this.orderService.deleteOrderByCustomerId(id);
+
+    return {
+      message: 'customer delete successfully',
+      deleteCustomer,
+    };
   }
 }

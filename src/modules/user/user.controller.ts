@@ -1,6 +1,6 @@
 // External dependencies
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { Controller, Delete, Get, HttpCode, Logger, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Logger, Param, Patch, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 // Internal dependencies
 
@@ -30,27 +30,21 @@ export class UserController {
   })
   @Get('me')
   async getFullAccess(@GetUser() user: UserDocument): Promise<GetProfileResDto> {
-    this.logger.debug(`User ${user.email} requested their profile`);
+    const { email, name, id } = user;
     return {
       message: 'Profile retrieved successfully',
-      user,
+      id,
+      email,
+      name,
     };
   }
 
-  @Patch('/:id')
-  async updateUser(@Param('id') id: string, updateUserDto: UpdateUserDto) {
-    const data = await this.userService.update(id, updateUserDto);
+  @HttpCode(200)
+  @Patch('/:userId')
+  @UsePipes(new ValidationPipe())
+  async updateUser(@Param('userId') userId: string, @Body() updateUserDto: UpdateUserDto) {
+    const data = await this.userService.update(userId, updateUserDto);
 
     return { message: 'User update successfully', user: data };
-  }
-
-  @Delete('me')
-  async deleteUser(@GetUser() user: string) {
-    const data = await this.userService.delete(user);
-
-    return {
-      message: 'User delete successfully',
-      deletedUser: data,
-    };
   }
 }

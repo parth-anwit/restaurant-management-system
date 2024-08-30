@@ -47,8 +47,8 @@ export class UserRepository {
     return this.userModel.findByIdAndUpdate(id, update, options);
   }
 
-  async deleteUser(userId: string) {
-    const data = await this.userModel.findOneAndDelete({ _id: userId });
+  async deleteUser(currentUser: UserDocument) {
+    const data = await this.userModel.findOneAndDelete({ _id: currentUser._id });
 
     return data;
   }
@@ -61,16 +61,9 @@ export class UserRepository {
     return data;
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    const user = await this.userModel.findByIdAndUpdate(
-      id,
-      {
-        $set: {
-          ...updateUserDto,
-        },
-      },
-      { new: true },
-    );
+  async update(userId: string, updateUserDto: UpdateUserDto) {
+    const user = await this.userModel.findOneAndUpdate({ _id: userId }, { $set: { ...updateUserDto } }, { new: true, upsert: true });
+
     return user;
   }
 }

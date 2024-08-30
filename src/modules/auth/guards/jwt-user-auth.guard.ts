@@ -18,14 +18,10 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync(token, {
         secret: `${process.env.JWT_SECRET}`,
       });
-
       if (!payload) {
         throw new HttpException('user not found', 404);
       }
-
-      const { user } = payload;
-
-      request.user = user;
+      request.user = payload;
     } catch {
       throw new UnauthorizedException();
     }

@@ -12,11 +12,11 @@ export class ValidBillGuard implements CanActivate {
     if (!restaurantId) {
       throw new UnauthorizedException();
     }
-    const billId = request.params.bill_id;
-    if (!billId) {
+    const billID = request.params.billId;
+    if (!billID) {
       throw new HttpException('bill-id not found', 404);
     }
-    const data = await this.billRepository.getSpecific(restaurantId, billId);
+    const data = await this.billRepository.getSpecific(restaurantId, billID);
 
     if (!data) {
       throw new HttpException('please provide valid bill', 404);

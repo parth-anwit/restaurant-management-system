@@ -4,17 +4,17 @@ import { IsBoolean, IsNumber, IsString } from 'class-validator';
 export class CreateBillDto {
   @ApiProperty()
   @IsString()
-  title: string;
+  title?: string;
 
   @ApiProperty()
   @IsNumber()
-  total: number;
+  total?: number;
 
   @ApiProperty()
   @IsBoolean()
-  isBillGenerated: boolean;
+  isBillGenerated?: boolean;
 
   @ApiProperty()
   @IsNumber()
-  discount: number;
+  discount?: number;
 }

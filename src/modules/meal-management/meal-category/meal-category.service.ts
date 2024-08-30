@@ -1,6 +1,6 @@
-import mongoose, { Types } from 'mongoose';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 
-import { HttpException, Injectable } from '@nestjs/common';
+import { idChecker } from '../../invalidIDChecker';
 
 import { MealCategoryRepository } from './meal-category.repository';
 
@@ -11,73 +11,49 @@ import { UpdateMealCategoryDto } from './dtos/update.dto';
 export class MealCategoryService {
   constructor(private mealCategoryRepository: MealCategoryRepository) {}
 
-  async create(restaurantId: Types.ObjectId, createMealCategoryDto: CreateMealCategoryDto) {
-    try {
-      const findMealCategory = await this.mealCategoryRepository.findByMealCategoryName(createMealCategoryDto.name);
+  async create(restaurantId: string, createMealCategoryDto: CreateMealCategoryDto) {
+    const findMealCategory = await this.mealCategoryRepository.findByMealCategoryName(createMealCategoryDto.name);
 
-      if (findMealCategory) {
-        throw new HttpException('mealCategory already present', 401);
-      }
-
-      const data = await this.mealCategoryRepository.create(restaurantId, createMealCategoryDto);
-      if (!data) {
-        throw new HttpException('something is wrong while meal category create', 401);
-      }
-      return {
-        message: 'mealCategory created successfully',
-        mealCategory: data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (findMealCategory) {
+      throw new BadRequestException('mealCategory already present');
     }
+
+    const data = await this.mealCategoryRepository.create(restaurantId, createMealCategoryDto);
+    if (!data) {
+      throw new NotFoundException('something is wrong while meal category create');
+    }
+    return {
+      message: 'mealCategory created successfully',
+      mealCategory: data,
+    };
   }
 
-  async get(restaurantId: Types.ObjectId) {
-    try {
-      const data = await this.mealCategoryRepository.get(restaurantId);
-      if (data.length === 0) {
-        throw new HttpException('no meal category found', 404);
-      }
-      return {
-        mealCategory: data,
-      };
-    } catch (error) {
-      throw new Error(error);
+  async get(restaurantId: string) {
+    const data = await this.mealCategoryRepository.get(restaurantId);
+    if (data.length === 0) {
+      throw new NotFoundException('no meal category found');
     }
+    return {
+      mealCategory: data,
+    };
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('id is not valid', 404);
-      }
+  async getSpecific(restaurantId: string, mealCategoryId: string) {
+    idChecker(mealCategoryId);
+    const findMealCategory = await this.mealCategoryRepository.getSpecific(restaurantId, mealCategoryId);
 
-      const findMealCategory = await this.mealCategoryRepository.getSpecific(restaurantId, id);
-
-      if (!findMealCategory) {
-        throw new HttpException('mealCategory not found', 404);
-      }
-
-      return {
-        mealCategory: findMealCategory,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!findMealCategory) {
+      throw new NotFoundException('mealCategory not found');
     }
+
+    return {
+      mealCategory: findMealCategory,
+    };
   }
 
-  async update(restaurantId: Types.ObjectId, id: string, update: UpdateMealCategoryDto) {
+  async update(restaurantId: string, mealCategoryId: string, update: UpdateMealCategoryDto) {
     try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
-      const findMealCategory = await this.mealCategoryRepository.getSpecific(restaurantId, id);
-
-      if (!findMealCategory) {
-        throw new HttpException('mealCategory not found', 404);
-      }
+      idChecker(mealCategoryId);
 
       const updateMealCategory = await this.mealCategoryRepository.update(restaurantId, update);
 
@@ -94,21 +70,14 @@ export class MealCategoryService {
     }
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
+  async delete(restaurantId: string, mealCategoryId: string) {
     try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
-      const findMealCategory = await this.mealCategoryRepository.getSpecific(restaurantId, id);
+      idChecker(mealCategoryId);
 
-      if (!findMealCategory) {
-        throw new HttpException('mealCategory not found', 404);
-      }
-      const deleteMealCategory = await this.mealCategoryRepository.delete(restaurantId, id);
+      const deleteMealCategory = await this.mealCategoryRepository.delete(restaurantId, mealCategoryId);
 
       if (!deleteMealCategory) {
-        throw new HttpException('something is wrong while delete mealCategory', 404);
+        throw new NotFoundException('something is wrong while delete mealCategory');
       }
 
       return {

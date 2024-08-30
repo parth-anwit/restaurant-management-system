@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 
 import { Access } from './access.schema';
+import { UserDocument } from '../user/user.schema';
 
 @Injectable()
 export class AccessRepository {
@@ -17,6 +18,11 @@ export class AccessRepository {
   async find(restaurantId: Types.ObjectId, userId: string) {
     const data = await this.AccessModule.findOne({ restaurant: restaurantId, user: userId });
 
+    return data;
+  }
+
+  async findRestaurantOfCurrentUser(currentUser: UserDocument) {
+    const data = await this.AccessModule.find({ user: currentUser.id }).populate('restaurant');
     return data;
   }
 

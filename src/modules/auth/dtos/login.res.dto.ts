@@ -19,4 +19,9 @@ export class LoginResDto {
     type: User,
   })
   user: User;
+
+  @ApiProperty({
+    type: User,
+  })
+  name?: string;
 }

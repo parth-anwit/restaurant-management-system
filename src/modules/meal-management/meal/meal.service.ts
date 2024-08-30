@@ -1,6 +1,6 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 
-import mongoose, { Types } from 'mongoose';
+import { idChecker } from '../../invalidIDChecker';
 
 import { CreateMealDto } from './dtos/create.dto';
 
@@ -12,46 +12,38 @@ import { MealRepository } from './meal.repository';
 export class MealService {
   constructor(private mealRepository: MealRepository) {}
 
-  async create(restaurantId: string, createMeal: CreateMealDto, mealCategoryId: string) {
-    try {
-      const findMeal = await this.mealRepository.findMealByName(createMeal.name);
+  async create(restaurantId: string, mealCategoryId: string, createMeal: CreateMealDto) {
+    const findMeal = await this.mealRepository.findMealByName(createMeal.name);
 
-      if (findMeal) {
-        throw new HttpException('meal already present', 401);
-      }
-
-      const data = await this.mealRepository.create(restaurantId, createMeal, mealCategoryId);
-      return {
-        message: 'meal created successfully',
-        meal: data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (findMeal) {
+      throw new BadRequestException('meal already present');
     }
+
+    const data = await this.mealRepository.create(restaurantId, mealCategoryId, createMeal);
+    return {
+      message: 'meal created successfully',
+      meal: data,
+    };
   }
 
-  async get(restaurantId: Types.ObjectId) {
-    try {
-      const data = await this.mealRepository.get(restaurantId);
+  async get(restaurantId: string) {
+    const data = await this.mealRepository.get(restaurantId);
 
-      if (data.length === 0) {
-        throw new HttpException('no meal  found', 404);
-      }
-
-      return {
-        meal: data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (data.length === 0) {
+      throw new NotFoundException('no meal  found');
     }
+
+    return {
+      meal: data,
+    };
   }
 
-  async getTotalMeals(id: Types.ObjectId) {
+  async getTotalMeals(mealId: string) {
     try {
-      const data = await this.mealRepository.getTotalMeals(id);
+      const data = await this.mealRepository.getTotalMeals(mealId);
 
       if (data.length === 0) {
-        throw new HttpException('no meal  found', 404);
+        throw new NotFoundException('no meal  found');
       }
 
       return data;
@@ -60,7 +52,7 @@ export class MealService {
     }
   }
 
-  async getMealsOnMealCategory(restaurantId: Types.ObjectId, mealCategoryId: string) {
+  async getMealsOnMealCategory(restaurantId: string, mealCategoryId: string) {
     try {
       const data = await this.mealRepository.getMealsOnMealCategory(restaurantId, mealCategoryId);
       if (data.length === 0) {
@@ -72,78 +64,46 @@ export class MealService {
     }
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
+  async getSpecific(restaurantId: string, mealId: string) {
+    idChecker(mealId);
 
-      const findMeal = await this.mealRepository.getSpecific(restaurantId, id);
+    const findMeal = await this.mealRepository.getSpecific(restaurantId, mealId);
 
-      if (!findMeal) {
-        throw new HttpException('meal not found', 404);
-      }
-
-      return {
-        meal: findMeal,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!findMeal) {
+      throw new HttpException('meal not found', 404);
     }
+
+    return {
+      meal: findMeal,
+    };
   }
 
-  async update(id: string, update: UpdateMealDto, restaurantId: Types.ObjectId, mealCategoryId: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
+  async update(restaurantId: string, mealCategoryId: string, mealId: string, update: UpdateMealDto) {
+    idChecker(mealId);
 
-      const findMeal = await this.mealRepository.getSpecific(restaurantId, id);
+    const updateMeal = await this.mealRepository.update(restaurantId, mealCategoryId, mealId, update);
 
-      if (!findMeal) {
-        throw new HttpException('meal not found', 404);
-      }
-
-      const updateMeal = await this.mealRepository.update(id, update, restaurantId, mealCategoryId);
-
-      if (!updateMeal) {
-        throw new HttpException('meal category not found', 404);
-      }
-
-      return {
-        message: 'meal update successfully',
-        updateMeal,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!updateMeal) {
+      throw new NotFoundException('meal category not found');
     }
+
+    return {
+      message: 'meal update successfully',
+      updateMeal,
+    };
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
+  async delete(restaurantId: string, mealId: string) {
+    idChecker(mealId);
 
-      const findMeal = await this.mealRepository.getSpecific(restaurantId, id);
+    const deleteMealCategory = await this.mealRepository.delete(restaurantId, mealId);
 
-      if (!findMeal) {
-        throw new HttpException('meal not found', 404);
-      }
-      const deleteMealCategory = await this.mealRepository.delete(restaurantId, id);
-
-      if (!deleteMealCategory) {
-        throw new HttpException('mealCategory not found', 404);
-      }
-      return {
-        message: 'meal delete successfully',
-        deleteMeal: deleteMealCategory,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!deleteMealCategory) {
+      throw new NotFoundException('mealCategory not found');
     }
+    return {
+      message: 'meal delete successfully',
+      deleteMeal: deleteMealCategory,
+    };
   }
 }

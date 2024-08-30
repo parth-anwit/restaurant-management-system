@@ -1,6 +1,6 @@
 // Objective: Implement the user query service to handle the user queries
 // External dependencies
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 // Internal dependencies
 import { User, UserDocument } from './user.schema';
@@ -44,34 +44,18 @@ export class UserQueryService {
     }
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    try {
-      const user = await this.userRepository.findById(id);
-
-      if (!user) {
-        throw new HttpException('user not found', 404);
-      }
-
-      return await this.userRepository.update(id, updateUserDto);
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus,
-          error: `user is not found `,
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
-    }
+  async update(userId: string, updateUserDto: UpdateUserDto) {
+    const updateUserData = await this.userRepository.update(userId, updateUserDto);
+    return updateUserData;
   }
 
-  async delete(user: string) {
-    try {
-      return await this.userRepository.deleteUser(user);
-    } catch (error) {
-      throw InternalServerErrorException.INTERNAL_SERVER_ERROR(error);
+  async delete(currentUser: UserDocument) {
+    const deleteUser = await this.userRepository.deleteUser(currentUser);
+
+    if (!deleteUser) {
+      throw new NotFoundException('user not found');
     }
+
+    return deleteUser;
   }
 }

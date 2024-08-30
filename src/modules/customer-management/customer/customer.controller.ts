@@ -1,7 +1,5 @@
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
-
-import mongoose from 'mongoose';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
@@ -20,39 +18,43 @@ import { UpdateCustomerDto } from './dtos/update.dto';
 export class CustomerController {
   constructor(private customerService: CustomerService) {}
 
+  @HttpCode(200)
   @Post()
   @UsePipes(new ValidationPipe())
-  async create(@Headers('restaurant_id') restaurant_id: string, @Body() createDto: CreateCustomerDto) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  async create(@Headers('restaurant_id') restaurantId: string, @Body() createDto: CreateCustomerDto) {
     const data = await this.customerService.create(restaurantId, createDto);
     return data;
   }
 
+  @HttpCode(200)
   @Get('list')
-  async get(@Headers('restaurant_id') restaurant_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  async get(@Headers('restaurant_id') restaurantId: string) {
     const data = await this.customerService.get(restaurantId);
     return data;
   }
 
-  @Get(':id')
-  async getSpecific(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.customerService.getSpecific(restaurantId, id);
+  @HttpCode(200)
+  @Get(':customerId')
+  async getSpecific(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
+    const data = await this.customerService.getSpecific(restaurantId, customerId);
     return data;
   }
 
-  @Patch(':id')
-  async update(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.customerService.update(restaurantId, id, updateCustomerDto);
+  @HttpCode(200)
+  @Patch(':customerId')
+  async update(
+    @Headers('restaurant_id') restaurantId: string,
+    @Param('customerId') customerId: string,
+    @Body() updateCustomerDto: UpdateCustomerDto,
+  ) {
+    const data = await this.customerService.update(restaurantId, customerId, updateCustomerDto);
     return data;
   }
 
-  @Delete(':id')
-  async delete(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.customerService.delete(restaurantId, id);
+  @HttpCode(200)
+  @Delete(':customerId')
+  async delete(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
+    const data = await this.customerService.delete(restaurantId, customerId);
     return data;
   }
 }

@@ -1,7 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { CreateMealCategoryDto } from './dtos/create.dto';
 import { MealCategory } from './meal-category.schema';
@@ -17,16 +17,16 @@ export class MealCategoryRepository {
     private mealRepository: MealRepository,
   ) {}
 
-  async create(restaurantId: Types.ObjectId, createMealCategoryDto: CreateMealCategoryDto) {
+  async create(restaurantId: string, createMealCategoryDto: CreateMealCategoryDto) {
     const { name } = createMealCategoryDto;
     const data = new this.MealCategoryModule({
-      restaurant: restaurantId,
+      restaurant: new mongoose.Types.ObjectId(restaurantId),
       name,
     });
     return data.save();
   }
 
-  async get(restaurantId: Types.ObjectId) {
+  async get(restaurantId: string) {
     const data = await this.MealCategoryModule.find({ restaurant: restaurantId }).exec();
     return data;
   }
@@ -39,12 +39,12 @@ export class MealCategoryRepository {
     return false;
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.MealCategoryModule.findOne({ restaurant: restaurantId, _id: id });
+  async getSpecific(restaurantId: string, mealCategoryId: string) {
+    const data = await this.MealCategoryModule.findOne({ restaurant: restaurantId, _id: mealCategoryId });
     return data;
   }
 
-  async update(restaurantId: Types.ObjectId, update: UpdateMealCategoryDto) {
+  async update(restaurantId: string, update: UpdateMealCategoryDto) {
     const data = await this.MealCategoryModule.findOneAndUpdate({ restaurant: restaurantId }, update, { new: true });
 
     return data;
@@ -60,9 +60,9 @@ export class MealCategoryRepository {
     return data;
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    this.mealRepository.deleteMealByMealCategoryId(id);
-    const data = await this.MealCategoryModule.findOneAndDelete({ restaurant: restaurantId, _id: id });
+  async delete(restaurantId: string, mealCategoryId: string) {
+    this.mealRepository.deleteMealByMealCategoryId(mealCategoryId);
+    const data = await this.MealCategoryModule.findOneAndDelete({ restaurant: restaurantId, _id: mealCategoryId });
     return data;
   }
 }

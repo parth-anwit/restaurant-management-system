@@ -13,8 +13,7 @@ export class ValidRestaurantGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    const userId = request.user;
-
+    const userId = request.user.id;
     const data = await this.accessService.find(restaurantId, userId);
     if (!data) {
       throw new UnauthorizedException();

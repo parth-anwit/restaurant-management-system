@@ -1,6 +1,6 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { CreateMealDto } from './dtos/create.dto';
 
@@ -12,11 +12,11 @@ import { UpdateMealDto } from './dtos/update.dto';
 export class MealRepository {
   constructor(@InjectModel(Meal.name) private MealModule: Model<Meal>) {}
 
-  async create(restaurantId: string, createMeal: CreateMealDto, mealCategoryId: string) {
+  async create(restaurantId: string, mealCategoryId: string, createMeal: CreateMealDto) {
     const { name, money } = createMeal;
     const data = new this.MealModule({
-      restaurant: restaurantId,
-      mealCategory: mealCategoryId,
+      restaurant: new mongoose.Types.ObjectId(restaurantId),
+      mealCategory: new mongoose.Types.ObjectId(mealCategoryId),
       name,
       money,
     });
@@ -24,24 +24,23 @@ export class MealRepository {
     return data.save();
   }
 
-  async get(restaurantId: Types.ObjectId) {
+  async get(restaurantId: string) {
     const data = await this.MealModule.find({ restaurant: restaurantId }).exec();
     return data;
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.MealModule.findOne({ restaurant: restaurantId, _id: id });
+  async getSpecific(restaurantId: string, mealId: string) {
+    const data = await this.MealModule.findOne({ restaurant: restaurantId, _id: mealId });
     return data;
   }
 
-  async getTotalMeals(id: Types.ObjectId) {
-    const data = await this.MealModule.find({ _id: id });
+  async getTotalMeals(mealId: string) {
+    const data = await this.MealModule.find({ _id: mealId });
     return data;
   }
 
-  async getMealsOnMealCategory(restaurantId: Types.ObjectId, mealCategoryId: string) {
+  async getMealsOnMealCategory(restaurantId: string, mealCategoryId: string) {
     const data = await this.MealModule.find({ restaurant: restaurantId, mealCategory: mealCategoryId });
-    console.log('data', data);
     return data;
   }
 
@@ -53,19 +52,21 @@ export class MealRepository {
     return false;
   }
 
-  async update(id: string, update: UpdateMealDto, restaurantId: Types.ObjectId, mealCategoryId: string) {
+  async update(restaurantId: string, mealCategoryId: string, mealId: string, update: UpdateMealDto) {
     const { name, money } = update;
     const data = await this.MealModule.findOneAndUpdate(
-      { _id: id, restaurant: restaurantId },
+      { _id: mealId, restaurant: restaurantId },
       {
         $set: {
           name,
-          mealCategory: mealCategoryId,
+          mealCategory: new mongoose.Types.ObjectId(mealCategoryId),
           money,
-          restaurant: restaurantId,
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
         },
       },
+      { new: true },
     );
+
     return data;
   }
 
@@ -82,8 +83,8 @@ export class MealRepository {
     return data;
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.MealModule.findOneAndDelete({ restaurant: restaurantId, _id: id });
+  async delete(restaurantId: string, mealId: string) {
+    const data = await this.MealModule.findOneAndDelete({ restaurant: restaurantId, _id: mealId });
     return data;
   }
 }

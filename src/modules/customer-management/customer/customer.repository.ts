@@ -1,9 +1,11 @@
-import { Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
-import { HttpException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+
 import { InjectModel } from '@nestjs/mongoose';
 
 import { BillRepository } from '../../order-management/bill/bill.repository';
+
 import { Customer } from './customer.schema';
 
 import { CreateCustomerDto } from './dtos/create.dto';
@@ -18,11 +20,11 @@ export class CustomerRepository {
     private billRepository: BillRepository,
   ) {}
 
-  async create(restaurantId: Types.ObjectId, createCustomerDto: CreateCustomerDto) {
+  async create(restaurantId: string, createCustomerDto: CreateCustomerDto) {
     const { name, mobile } = createCustomerDto;
 
     const data = new this.CustomerModule({
-      restaurant: restaurantId,
+      restaurant: new mongoose.Types.ObjectId(restaurantId),
       name,
       mobile,
     });
@@ -30,13 +32,13 @@ export class CustomerRepository {
     return data.save();
   }
 
-  async get(restaurantId: Types.ObjectId) {
+  async get(restaurantId: string) {
     const data = await this.CustomerModule.find({ restaurant: restaurantId }).exec();
     return data;
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.CustomerModule.findOne({ restaurant: restaurantId, _id: id });
+  async getSpecific(restaurantId: string, customerId: string) {
+    const data = await this.CustomerModule.findOne({ restaurant: restaurantId, _id: customerId });
     return data;
   }
 
@@ -45,8 +47,8 @@ export class CustomerRepository {
     return data;
   }
 
-  async update(restaurantId: Types.ObjectId, id: string, updateDto: UpdateCustomerDto) {
-    const data = await this.CustomerModule.findOneAndUpdate({ restaurant: restaurantId, _id: id }, updateDto, {
+  async update(restaurantId: string, customerId: string, updateDto: UpdateCustomerDto) {
+    const data = await this.CustomerModule.findOneAndUpdate({ restaurant: restaurantId, _id: customerId }, updateDto, {
       new: true,
     });
     return data;
@@ -55,12 +57,12 @@ export class CustomerRepository {
   async deleteCustomerByRestaurantId(resId: string) {
     const data = await this.CustomerModule.deleteMany({ restaurant: resId });
     if (data.deletedCount === 0) {
-      throw new HttpException('no access found with this restaurantId', 404);
+      throw new NotFoundException('no access found with this restaurantId');
     }
     return data;
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
+  async delete(restaurantId: string, id: string) {
     const findUser = await this.CustomerModule.findOne({ _id: id });
 
     const mobileNumber = findUser.mobile;

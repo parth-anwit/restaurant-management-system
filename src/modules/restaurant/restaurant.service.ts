@@ -1,115 +1,74 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-
-import mongoose from 'mongoose';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 
 import { CreateRestaurantDto } from './dtos/createDto';
 import { UpdateRestaurantDto } from './dtos/updateDto';
 
 import { RestaurantRepository } from './restaurant.repository';
+import { UserDocument } from '../user/user.schema';
+
+import { idChecker } from '../invalidIDChecker';
 
 @Injectable()
 export class RestaurantService {
   constructor(private restaurantRepo: RestaurantRepository) {}
 
-  async create(createRestaurant: CreateRestaurantDto, user: string) {
-    try {
-      const data = await this.restaurantRepo.create(createRestaurant, user);
+  async create(currentUser: UserDocument, createRestaurant: CreateRestaurantDto) {
+    const data = await this.restaurantRepo.create(currentUser, createRestaurant);
 
-      return { message: 'restaurant created successfully', data };
-    } catch (error) {
-      throw new HttpException(
-        {
-          status: HttpStatus,
-          error: `something is wrong at restaurant creation`,
-        },
-        HttpStatus.FORBIDDEN,
-        {
-          cause: error,
-        },
-      );
+    if (!data) {
+      throw new ConflictException('something is wrong while create restaurant');
     }
+
+    return { message: 'restaurant created successfully', data };
   }
 
-  async get() {
-    try {
-      const data = await this.restaurantRepo.get();
-      if (data.length === 0) {
-        throw new HttpException('no restaurant found', 404);
-      }
-
-      return { data };
-    } catch (error) {
-      throw new Error(error);
+  async get(currentUser: UserDocument) {
+    const data = await this.restaurantRepo.get(currentUser);
+    if (data.length === 0) {
+      throw new NotFoundException('restaurant not found');
     }
+
+    return data;
   }
 
   async getSpecificRestaurant(id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('id is not correct', 404);
-      }
-      const findRestaurant = await this.restaurantRepo.getSpecificRestaurant(id);
-      if (!findRestaurant) {
-        throw new HttpException('restaurant not found', 404);
-      }
-      return {
-        restaurant: findRestaurant,
-      };
-    } catch (error) {
-      throw new Error(error);
+    idChecker(id);
+
+    const findRestaurant = await this.restaurantRepo.getSpecificRestaurant(id);
+
+    if (!findRestaurant) {
+      throw new NotFoundException('restaurant not found');
     }
+    return {
+      restaurant: findRestaurant,
+    };
   }
 
   async update(id: string, updateRestaurantDto: UpdateRestaurantDto) {
-    try {
-      const isValidId = mongoose.Types.ObjectId.isValid(id);
-      if (!isValidId) {
-        throw new HttpException('Invalid ID', 400);
-      }
-
-      const findRestaurant = await this.restaurantRepo.getSpecificRestaurant(id);
-      if (!findRestaurant) {
-        throw new HttpException('restaurant not found', 404);
-      }
-
-      const updateRestaurant = await this.restaurantRepo.update(id, updateRestaurantDto);
-      if (!updateRestaurant) {
-        throw new HttpException('something is wrong while update the restaurant', 404);
-      }
-
-      return {
-        message: 'restaurant updated successfully',
-        updateRestaurant,
-      };
-    } catch (error) {
-      throw new Error(error);
+    idChecker(id);
+    const updateRestaurant = await this.restaurantRepo.update(id, updateRestaurantDto);
+    if (!updateRestaurant) {
+      throw new BadRequestException('Something is wrong while update the restaurant');
     }
+
+    return {
+      message: 'restaurant updated successfully',
+      updateRestaurant,
+    };
   }
 
   async delete(id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('user not found', 404);
-      }
-      const findRestaurant = await this.restaurantRepo.getSpecificRestaurant(id);
-      if (!findRestaurant) {
-        throw new HttpException('restaurant not found', 404);
-      }
+    idChecker(id);
 
-      const deleteRestaurant = await this.restaurantRepo.delete(id);
+    const deleteRestaurant = await this.restaurantRepo.delete(id);
 
-      if (!deleteRestaurant) {
-        throw new HttpException('something is wrong while delete restaurant', 404);
-      }
-
-      return {
-        message: 'restaurant delete successfully',
-        deletedRestaurant: deleteRestaurant,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!deleteRestaurant) {
+      throw new NotFoundException('something is wrong while delete restaurant');
     }
+
+    return {
+      message: 'restaurant delete successfully',
+      deletedRestaurant: deleteRestaurant,
+    };
   }
 }

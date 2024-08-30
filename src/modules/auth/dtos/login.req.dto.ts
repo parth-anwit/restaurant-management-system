@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Optional } from '@nestjs/common';
 
 export class LoginReqDto {
   @ApiProperty({ description: 'Email address of the user', example: 'john@example.com' })
@@ -19,4 +20,7 @@ export class LoginReqDto {
     message: 'Password is too weak',
   })
   password: string;
+
+  @Optional()
+  name: string;
 }

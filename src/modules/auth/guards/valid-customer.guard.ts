@@ -7,17 +7,16 @@ export class ValidCustomerGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    const customerId = request.params.customer_id;
+    const customerID = request.params.customerId;
     const restaurantId = request.headers.restaurant_id;
     if (!restaurantId) {
       throw new UnauthorizedException();
     }
-
-    if (!customerId) {
+    if (!customerID) {
       throw new HttpException('customer not found', 404);
     }
 
-    const data = await this.customerRepository.getSpecific(restaurantId, customerId);
+    const data = await this.customerRepository.getSpecific(restaurantId, customerID);
 
     if (!data) {
       throw new HttpException('please provide valid customer', 404);

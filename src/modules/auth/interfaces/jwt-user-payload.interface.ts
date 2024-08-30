@@ -1,7 +1,8 @@
 import { Types } from 'mongoose';
 
 export interface JwtUserPayload {
-  user: string | Types.ObjectId;
+  id: Types.ObjectId;
+  name: string;
   email: string;
   code: number;
 }

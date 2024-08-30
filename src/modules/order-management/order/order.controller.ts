@@ -2,8 +2,6 @@ import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
 import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
-import mongoose from 'mongoose';
-
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
 import { JwtAuthGuard } from '../../auth/guards/jwt-user-auth.guard';
@@ -16,7 +14,7 @@ import { OrderService } from './order.service';
 import { ValidBillGuard } from '../../auth/guards/valid-bill.guard';
 import { ValidCustomerGuard } from '../../auth/guards/valid-customer.guard';
 
-@Controller('customer/:customer_id/bill/:bill_id/order')
+@Controller('customer/:customerId/bill/:billId/order')
 @ApiTags('Order')
 @ApiSecurity('JWT-auth')
 @UseGuards(JwtAuthGuard, ValidRestaurantGuard, ValidCustomerGuard, ValidBillGuard)
@@ -26,65 +24,57 @@ export class OrderController {
   @Post()
   @UsePipes(new ValidationPipe())
   async create(
-    @Headers('restaurant_id') restaurant_id: string,
     @Body() createDto: CreateOrderDto,
-    @Param('customer_id') customer_id: string,
-    @Param('bill_id') bill_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @Param('customerId') customerId: string,
+    @Param('billId') billId: string,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-
-    const data = await this.orderService.create(createDto, restaurantId, customer_id, bill_id);
+    const data = await this.orderService.create(restaurantId, customerId, billId, createDto);
     return data;
   }
 
-  @Get(':id/specific')
-  async getSpecific(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.orderService.getSpecific(restaurantId, id);
+  @Get(':orderId/specific')
+  async getSpecific(@Headers('restaurant_id') restaurantId: string, @Param('orderId') orderId: string) {
+    const data = await this.orderService.getSpecific(restaurantId, orderId);
     return data;
   }
 
-  @Patch(':id')
-  async update(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.orderService.update(restaurantId, id, updateOrderDto);
+  @Patch(':orderId')
+  async update(@Headers('restaurant_id') restaurantId: string, @Param('orderId') orderId: string, @Body() updateOrderDto: UpdateOrderDto) {
+    const data = await this.orderService.update(restaurantId, orderId, updateOrderDto);
     return data;
   }
 
-  @Delete(':id')
-  async delete(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.orderService.delete(restaurantId, id);
+  @Delete(':orderId')
+  async delete(@Headers('restaurant_id') restaurantId: string, @Param('orderId') orderId: string) {
+    const data = await this.orderService.delete(restaurantId, orderId);
     return data;
   }
 
   @Get('specific-customer')
-  async getAllOrdersOfSpecificCustomer(@Headers('restaurant_id') restaurant_id: string, @Param('customer_id') customer_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.orderService.getOrderOfSpecificCustomer(restaurantId, customer_id);
+  async getAllOrdersOfSpecificCustomer(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
+    const data = await this.orderService.getOrderOfSpecificCustomer(restaurantId, customerId);
     return data;
   }
 
-  @Patch(':order_id/specific-customer')
+  @Patch(':orderId/specific-customer')
   async updateSpecificOrderOfSpecificCustomer(
-    @Headers('restaurant_id') restaurant_id: string,
-    @Param('customer_id') customer_id: string,
-    @Param('order_id') order_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @Param('customerId') customerId: string,
+    @Param('orderId') orderId: string,
     @Body() updateDto: UpdateOrderDto,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.orderService.updateSpecificOrderOfSpecificCustomer(restaurantId, customer_id, order_id, updateDto);
+    const data = await this.orderService.updateSpecificOrderOfSpecificCustomer(restaurantId, customerId, orderId, updateDto);
     return data;
   }
 
-  @Delete(':order_id/specific-customer')
+  @Delete(':orderId/specific-customer')
   async deleteSpecificOrderOfSpecificCustomer(
-    @Headers('restaurant_id') restaurant_id: string,
-    @Param('customer_id') customer_id: string,
-    @Param('order_id') order_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @Param('customerId') customerId: string,
+    @Param('orderId') orderId: string,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.orderService.deleteSpecificOrderOfSpecificCustomer(restaurantId, customer_id, order_id);
+    const data = await this.orderService.deleteSpecificOrderOfSpecificCustomer(restaurantId, customerId, orderId);
     return data;
   }
 }

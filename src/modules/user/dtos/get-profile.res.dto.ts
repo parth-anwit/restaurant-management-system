@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { Types } from 'mongoose';
 import { User } from '../user.schema';
 
 export class GetProfileResDto {
@@ -13,5 +14,20 @@ export class GetProfileResDto {
     description: 'User details',
     type: User,
   })
-  user: User;
+  user?: User;
+
+  @ApiProperty({
+    type: Types.ObjectId,
+  })
+  id: Types.ObjectId;
+
+  @ApiProperty({
+    type: User,
+  })
+  email: string;
+
+  @ApiProperty({
+    type: User,
+  })
+  name: string;
 }

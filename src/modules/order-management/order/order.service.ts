@@ -1,6 +1,5 @@
-import mongoose, { Types } from 'mongoose';
-
-import { HttpException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { idChecker } from '../../invalidIDChecker';
 
 import { CreateOrderDto } from './dtos/create.dto';
 
@@ -16,182 +15,117 @@ export class OrderService {
     private billRepository: BillRepository,
   ) {}
 
-  async create(createDto: CreateOrderDto, restaurantId: Types.ObjectId, customer_id: string, bill_id: string) {
-    try {
-      const data = await this.orderRepository.create(createDto, restaurantId, customer_id, bill_id);
+  async create(restaurantId: string, customerId: string, billId: string, createDto: CreateOrderDto) {
+    const data = await this.orderRepository.create(restaurantId, customerId, billId, createDto);
 
-      if (!data) {
-        throw new HttpException('something is wrong while create order', 404);
-      }
-
-      return {
-        message: 'Order created successfully',
-        data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!data) {
+      throw new ConflictException('something is wrong while create order');
     }
+
+    return {
+      message: 'Order created successfully',
+      data,
+    };
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
+  async getSpecific(restaurantId: string, orderId: string) {
+    idChecker(orderId);
 
-      const order = await this.orderRepository.getSpecific(restaurantId, id);
+    const order = await this.orderRepository.getSpecific(restaurantId, orderId);
 
-      if (!order) {
-        throw new HttpException('order not found', 404);
-      }
-      return { order };
-    } catch (error) {
-      throw Error(error);
+    if (!order) {
+      throw new NotFoundException('order not found');
     }
+    return order;
   }
 
-  async update(restaurantId: Types.ObjectId, id: string, update: UpdateOrderDto) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
-      const findOrder = await this.orderRepository.getSpecific(restaurantId, id);
+  async update(restaurantId: string, orderId: string, update: UpdateOrderDto) {
+    idChecker(orderId);
 
-      if (!findOrder) {
-        throw new HttpException('order not found', 404);
-      }
+    const updateOrder = await this.orderRepository.update(restaurantId, orderId, update);
 
-      const updateOrder = await this.orderRepository.update(restaurantId, id, update);
-
-      if (!updateOrder) {
-        throw new HttpException('something is wrong while update order', 404);
-      }
-      return {
-        message: 'order update successfully',
-        updateOrder,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!updateOrder) {
+      throw new NotFoundException('something is wrong while update order');
     }
+    return {
+      message: 'order update successfully',
+      updateOrder,
+    };
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const isValid = mongoose.Types.ObjectId.isValid(id);
-      if (!isValid) {
-        throw new HttpException('something is wrong', 404);
-      }
+  async delete(restaurantId: string, orderId: string) {
+    idChecker(orderId);
 
-      const findOrder = await this.orderRepository.getSpecific(restaurantId, id);
+    const deleteOrder = await this.orderRepository.delete(restaurantId, orderId);
 
-      if (!findOrder) {
-        throw new HttpException('order not found', 404);
-      }
-
-      const deleteOrder = await this.orderRepository.delete(restaurantId, id);
-
-      if (!deleteOrder) {
-        throw new HttpException('something is wrong while delete order', 404);
-      }
-      return {
-        message: 'order delete successfully',
-        deleteOrder,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!deleteOrder) {
+      throw new NotFoundException('something is wrong while delete order');
     }
+    return {
+      message: 'order delete successfully',
+      deleteOrder,
+    };
   }
 
   async deleteOrderByBillId(billId: string) {
-    try {
-      const data = await this.orderRepository.deleteOrderByBillId(billId);
+    const data = await this.orderRepository.deleteOrderByBillId(billId);
 
-      if (!data) {
-        throw new HttpException('no order delete by billId', 404);
-      }
-
-      return { message: 'order delete by billId', data };
-    } catch (error) {
-      throw new Error(error);
+    if (!data) {
+      throw new NotFoundException('no order delete by billId');
     }
+
+    return { message: 'order delete by billId', data };
   }
 
   async deleteOrderByRestaurantId(resId: string) {
-    try {
-      const data = await this.orderRepository.deleteOrderByRestaurantId(resId);
-      if (!data) {
-        throw new HttpException('no order delete by restaurantId', 404);
-      }
-      return { message: 'order delete by restaurantId', data };
-    } catch (error) {
-      throw new Error(error);
+    const data = await this.orderRepository.deleteOrderByRestaurantId(resId);
+    if (!data) {
+      throw new NotFoundException('no order delete by restaurantId');
     }
+    return { message: 'order delete by restaurantId', data };
   }
 
-  async findOrderByBillId(restaurantId: Types.ObjectId, id: string) {
-    try {
-      const data = await this.orderRepository.findOrderByBillId(restaurantId, id);
-      if (!data) {
-        throw new HttpException('no order found based on billId', 404);
-      }
-      return { data };
-    } catch (error) {
-      throw new Error(error);
+  async findOrderByBillId(restaurantId: string, orderId: string) {
+    const data = await this.orderRepository.findOrderByBillId(restaurantId, orderId);
+    if (!data) {
+      throw new NotFoundException('no order found based on billId');
     }
+    return data;
   }
 
-  async getOrderOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string) {
-    try {
-      const data = await this.orderRepository.getOrderOfSpecificCustomer(restaurantId, customer_id);
+  async getOrderOfSpecificCustomer(restaurantId: string, customerId: string) {
+    const data = await this.orderRepository.getOrderOfSpecificCustomer(restaurantId, customerId);
 
-      if (!data) {
-        throw new HttpException('this customer have no orders', 404);
-      }
-
-      return { data };
-    } catch (error) {
-      throw new Error(error);
+    if (!data) {
+      throw new NotFoundException('this customer have no orders');
     }
+
+    return data;
   }
 
-  async updateSpecificOrderOfSpecificCustomer(
-    restaurantId: Types.ObjectId,
-    customer_id: string,
-    order_id: string,
-    updateDto: UpdateOrderDto,
-  ) {
-    try {
-      const data = await this.orderRepository.updateSpecificOrderOfSpecificCustomer(restaurantId, customer_id, order_id, updateDto);
+  async updateSpecificOrderOfSpecificCustomer(restaurantId: string, customerId: string, orderId: string, updateDto: UpdateOrderDto) {
+    const data = await this.orderRepository.updateSpecificOrderOfSpecificCustomer(restaurantId, customerId, orderId, updateDto);
 
-      if (!data) {
-        throw new HttpException('something is wrong while update specific customer order', 404);
-      }
-
-      return {
-        message: 'order updated successfully',
-        data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!data) {
+      throw new NotFoundException('something is wrong while update specific customer order');
     }
+
+    return {
+      message: 'order updated successfully',
+      data,
+    };
   }
 
-  async deleteSpecificOrderOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string, order_id: string) {
-    try {
-      const data = await this.orderRepository.deleteSpecificOrderOfSpecificCustomer(restaurantId, customer_id, order_id);
+  async deleteSpecificOrderOfSpecificCustomer(restaurantId: string, customerId: string, orderId: string) {
+    const data = await this.orderRepository.deleteSpecificOrderOfSpecificCustomer(restaurantId, customerId, orderId);
 
-      if (!data) {
-        throw new HttpException('something is wrong while delete specific customer order', 404);
-      }
-
-      return {
-        message: 'order delete successfully',
-        data,
-      };
-    } catch (error) {
-      throw new Error(error);
+    if (!data) {
+      throw new NotFoundException('something is wrong while delete specific customer order');
     }
+
+    return {
+      message: 'order delete successfully',
+      data,
+    };
   }
 }

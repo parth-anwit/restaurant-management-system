@@ -1,4 +1,4 @@
-import mongoose, { Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { InjectModel } from '@nestjs/mongoose';
 
@@ -14,15 +14,15 @@ import { Order } from './order.schema';
 export class OrderRepository {
   constructor(@InjectModel(Order.name) private OrderModule: Model<Order>) {}
 
-  async create(createDto: CreateOrderDto, restaurantId: Types.ObjectId, customer_id: string, bill_id: string) {
+  async create(restaurantId: string, customerId: string, billId: string, createDto: CreateOrderDto) {
     const { quantity, notes } = createDto;
 
     const data = new this.OrderModule({
-      restaurant: restaurantId,
-      customer: new mongoose.Types.ObjectId(customer_id),
+      restaurant: new mongoose.Types.ObjectId(restaurantId),
+      customer: new mongoose.Types.ObjectId(customerId),
       mealCategory: new mongoose.Types.ObjectId(createDto.mealCategory_id),
       meal: new mongoose.Types.ObjectId(createDto.meal_id),
-      bill: new mongoose.Types.ObjectId(bill_id),
+      bill: new mongoose.Types.ObjectId(billId),
       quantity,
       notes,
     });
@@ -30,18 +30,18 @@ export class OrderRepository {
     return data.save();
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.OrderModule.findOne({ restaurant: restaurantId, _id: id });
+  async getSpecific(restaurantId: string, orderId: string) {
+    const data = await this.OrderModule.findOne({ restaurant: restaurantId, _id: orderId });
     return data;
   }
 
-  async update(restaurantId: Types.ObjectId, id: string, update: UpdateOrderDto) {
-    const data = await this.OrderModule.findOneAndUpdate({ restaurant: restaurantId, _id: id }, update, { new: true });
+  async update(restaurantId: string, orderId: string, update: UpdateOrderDto) {
+    const data = await this.OrderModule.findOneAndUpdate({ restaurant: restaurantId, _id: orderId }, update, { new: true });
     return data;
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.OrderModule.findOneAndDelete({ restaurant: restaurantId, _id: id });
+  async delete(restaurantId: string, orderId: string) {
+    const data = await this.OrderModule.findOneAndDelete({ restaurant: restaurantId, _id: orderId });
     return data;
   }
 
@@ -58,27 +58,22 @@ export class OrderRepository {
     return data;
   }
 
-  async findOrderByBillId(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.OrderModule.find({ restaurant: restaurantId, bill: id }).populate('meal');
+  async findOrderByBillId(restaurantId: string, billId: string) {
+    const data = await this.OrderModule.find({ restaurant: restaurantId, bill: billId }).populate('meal');
     return data;
   }
 
-  async getOrderOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string) {
-    const data = await this.OrderModule.findOne({ restaurant: restaurantId, customer: customer_id });
+  async getOrderOfSpecificCustomer(restaurantId: string, customerId: string) {
+    const data = await this.OrderModule.findOne({ restaurant: restaurantId, customer: customerId });
     return data;
   }
 
-  async updateSpecificOrderOfSpecificCustomer(
-    restaurantId: Types.ObjectId,
-    customer_id: string,
-    order_id: string,
-    updateDto: UpdateOrderDto,
-  ) {
+  async updateSpecificOrderOfSpecificCustomer(restaurantId: string, customerId: string, orderId: string, updateDto: UpdateOrderDto) {
     const data = await this.OrderModule.findOneAndUpdate(
       {
         restaurant: restaurantId,
-        customer: customer_id,
-        _id: order_id,
+        customer: customerId,
+        _id: orderId,
       },
       {
         $set: {
@@ -91,11 +86,11 @@ export class OrderRepository {
     return data;
   }
 
-  async deleteSpecificOrderOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string, order_id: string) {
+  async deleteSpecificOrderOfSpecificCustomer(restaurantId: string, customerId: string, orderId: string) {
     const data = await this.OrderModule.findOneAndDelete({
       restaurant: restaurantId,
-      _id: order_id,
-      customer: customer_id,
+      _id: orderId,
+      customer: customerId,
     });
     return data;
   }

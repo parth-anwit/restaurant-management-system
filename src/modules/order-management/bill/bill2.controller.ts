@@ -1,5 +1,3 @@
-import mongoose from 'mongoose';
-
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Controller, Get, Headers, UseGuards } from '@nestjs/common';
 
@@ -16,8 +14,7 @@ export class All_Bill_Controller {
   constructor(private billRepository: BillRepository) {}
 
   @Get('list')
-  async getAllBill(@Headers('restaurant_id') restaurant_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  async getAllBill(@Headers('restaurant_id') restaurantId: string) {
     const data = this.billRepository.getBills(restaurantId);
 
     return data;

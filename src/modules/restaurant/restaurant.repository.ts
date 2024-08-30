@@ -1,12 +1,13 @@
 import { InjectModel } from '@nestjs/mongoose';
 import { Injectable } from '@nestjs/common';
-import mongoose, { Model } from 'mongoose';
+import { Model } from 'mongoose';
 
 import { AccessRepository } from '../access/access.repository';
 import { Restaurant } from './restaurant.schema';
 
 import { CreateRestaurantDto } from './dtos/createDto';
 import { UpdateRestaurantDto } from './dtos/updateDto';
+import { UserDocument } from '../user/user.schema';
 
 @Injectable()
 export class RestaurantRepository {
@@ -15,19 +16,22 @@ export class RestaurantRepository {
     private accessRepo: AccessRepository,
   ) {}
 
-  async create(createResDto: CreateRestaurantDto, userId: string) {
+  async create(currentUser: UserDocument, createResDto: CreateRestaurantDto) {
     const newRestaurant = new this.RestaurantModule(createResDto);
     const data = newRestaurant.save();
     await this.accessRepo.create({
       restaurant: newRestaurant._id,
-      user: new mongoose.Types.ObjectId(userId),
+      user: currentUser.id,
       role: 'Owner',
     });
     return data;
   }
 
-  async get() {
-    return this.RestaurantModule.find().exec();
+  async get(currentUser: UserDocument) {
+    const getRestaurant = await this.accessRepo.findRestaurantOfCurrentUser(currentUser);
+
+    // get the restaurant from accessData
+    return getRestaurant.map((x) => x.restaurant);
   }
 
   async getSpecificRestaurant(id: string) {

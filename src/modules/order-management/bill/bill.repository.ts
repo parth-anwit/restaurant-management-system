@@ -1,12 +1,13 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model, Types } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 import { Bill } from './bill.schema';
 import { Meal } from '../../meal-management/meal/meal.schema';
 import { MealService } from '../../meal-management/meal/meal.service';
 import { OrderRepository } from '../order/order.repository';
 import { UpdateBillDto } from './dtos/update.dto';
+import { UserDocument } from '../../user/user.schema';
 
 @Injectable()
 export class BillRepository {
@@ -18,62 +19,58 @@ export class BillRepository {
     private mealService: MealService,
   ) {}
 
-  async create(restaurant_id: Types.ObjectId, userId: string, customer_id: string) {
+  async create(restaurantId: string, currentUser: UserDocument, customerId: string) {
     const newBill = new this.BillModule({
-      restaurant: restaurant_id,
-      user: userId,
-      customer: new mongoose.Types.ObjectId(customer_id),
+      restaurant: new mongoose.Types.ObjectId(restaurantId),
+      user: currentUser.id,
+      customer: new mongoose.Types.ObjectId(customerId),
       startTime: new Date(),
     });
     return newBill.save();
   }
 
-  async endBillSession(restaurant_id: Types.ObjectId, userId: string, customer_id: string, bill_id: string) {
-    try {
-      const data = await this.BillModule.find({
-        restaurant: restaurant_id,
-        _id: bill_id,
-        isBillGenerated: false,
-      });
-      if (!data) {
-        throw new HttpException('Session is not starting yet', 404);
-      }
-
-      const endSession = await this.BillModule.findOneAndUpdate(
-        { restaurant: restaurant_id, _id: bill_id },
-        {
-          $set: {
-            restaurant: restaurant_id,
-            user: userId,
-            customer: new mongoose.Types.ObjectId(customer_id),
-            endTime: new Date(),
-            isBillGenerated: true,
-            discount: 10,
-          },
-        },
-      );
-
-      if (!endSession) {
-        throw new HttpException('No bills were updated. Check the bill_id.', 404);
-      }
-
-      return endSession;
-    } catch (error) {
-      throw new HttpException('An error occurred while ending the session', 500);
+  async endBillSession(restaurantId: string, currentUser: UserDocument, customerId: string, billId: string) {
+    const data = await this.BillModule.findOne({
+      restaurant: restaurantId,
+      _id: billId,
+      isBillGenerated: false,
+    });
+    if (!data) {
+      throw new HttpException('Session is not starting yet', 404);
     }
+
+    const endSession = await this.BillModule.findOneAndUpdate(
+      { restaurant: restaurantId, _id: billId },
+      {
+        $set: {
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
+          user: currentUser._id,
+          customer: new mongoose.Types.ObjectId(customerId),
+          endTime: new Date(),
+          isBillGenerated: true,
+          discount: 10,
+        },
+      },
+    );
+
+    if (!endSession) {
+      throw new ConflictException('No bills were updated. Check the bill_id.');
+    }
+
+    return endSession;
   }
 
-  async generateBill(restaurant_id: Types.ObjectId, user: string, customer_id: string, bill_id: string) {
+  async generateBill(restaurantId: string, currentUser: UserDocument, customerId: string, billId: string) {
     const bill = await this.BillModule.findOne({
-      restaurant: restaurant_id,
-      _id: bill_id,
+      restaurant: new mongoose.Types.ObjectId(restaurantId),
+      _id: new mongoose.Types.ObjectId(billId),
       isBillGenerated: true,
     }).lean();
 
     this.logger.debug({ data: bill }, 'data');
 
     if (bill) {
-      const orders = await this.orderRepository.findOrderByBillId(restaurant_id, bill_id);
+      const orders = await this.orderRepository.findOrderByBillId(restaurantId, billId);
 
       let billTitle = '';
       let total = 0;
@@ -87,14 +84,15 @@ export class BillRepository {
 
       const finalTotal = total - (total * discount) / 100;
       const updateBill = await this.BillModule.findOneAndUpdate(
-        { restaurant: restaurant_id, _id: bill_id },
+        { restaurant: restaurantId, _id: billId },
         {
           $set: {
             title: billTitle.trim(),
             total: finalTotal,
-            customer: new mongoose.Types.ObjectId(customer_id),
+            customer: new mongoose.Types.ObjectId(customerId),
           },
         },
+        { new: true },
       );
       return updateBill;
     }
@@ -106,25 +104,25 @@ export class BillRepository {
     return data;
   }
 
-  async getActiveBillOfSpecificCustomerFromBill(id: string) {
-    const data = await this.BillModule.findOne({ customer: id });
+  async getActiveBillOfSpecificCustomerFromBill(customerId: string) {
+    const data = await this.BillModule.findOne({ customer: customerId, isBillGenerated: false });
     return data;
   }
 
-  async getSpecific(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.BillModule.findOne({ restaurant: restaurantId, _id: id });
+  async getSpecific(restaurantId: string, billId: string) {
+    const data = await this.BillModule.findOne({ restaurant: restaurantId, _id: billId });
     return data;
   }
 
-  async getBills(restaurantId: Types.ObjectId) {
+  async getBills(restaurantId: string) {
     const data = await this.BillModule.find({ restaurant: restaurantId })
       .populate('restaurant', '-_id -__v')
       .populate('customer', '-_id -__v -restaurant');
     return data;
   }
 
-  async update(restaurantId: Types.ObjectId, id: string, updateDto: UpdateBillDto) {
-    const data = await this.BillModule.findOneAndUpdate({ restaurant: restaurantId, _id: id }, updateDto, {
+  async update(restaurantId: string, billId: string, updateDto: UpdateBillDto) {
+    const data = await this.BillModule.findOneAndUpdate({ restaurant: restaurantId, _id: billId }, updateDto, {
       new: true,
     });
     return data;
@@ -143,18 +141,18 @@ export class BillRepository {
     return data;
   }
 
-  async delete(restaurantId: Types.ObjectId, id: string) {
-    const data = await this.BillModule.findOneAndDelete({ restaurant: restaurantId, _id: id });
+  async delete(restaurantId: string, billId: string) {
+    const data = await this.BillModule.findOneAndDelete({ restaurant: restaurantId, _id: billId });
     return data;
   }
 
-  async getActiveBills(restaurantId: Types.ObjectId) {
+  async getActiveBills(restaurantId: string) {
     const activeBills = await this.BillModule.find({ restaurant: restaurantId, isBillGenerated: false });
 
     return activeBills;
   }
 
-  async getNotActiveBills(restaurantId: Types.ObjectId) {
+  async getNotActiveBills(restaurantId: string) {
     const notActiveBills = await this.BillModule.find({
       restaurant: restaurantId,
       isBillGenerated: true,
@@ -162,17 +160,13 @@ export class BillRepository {
     return notActiveBills;
   }
 
-  // pending
-
-  async getBillsOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string) {
+  async getBillsOfSpecificCustomer(restaurantId: string, customer_id: string) {
     const specificCustomerBill = await this.BillModule.findOne({ restaurant: restaurantId, customer: customer_id });
 
     return specificCustomerBill;
   }
 
-  // pending
-
-  async getActiveBillOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string) {
+  async getActiveBillOfSpecificCustomer(restaurantId: string, customer_id: string) {
     const data = await this.BillModule.findOne({
       restaurant: restaurantId,
       customer: customer_id,
@@ -181,9 +175,7 @@ export class BillRepository {
     return data;
   }
 
-  // pending
-
-  async getNotActiveBillOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string) {
+  async getNotActiveBillOfSpecificCustomer(restaurantId: string, customer_id: string) {
     const data = await this.BillModule.findOne({
       restaurant: restaurantId,
       customer: customer_id,
@@ -210,14 +202,12 @@ export class BillRepository {
     return result;
   }
 
-  // pending
-
-  async updateSpecificBillOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string, bill_id: string, update: UpdateBillDto) {
+  async updateSpecificBillOfSpecificCustomer(restaurantId: string, customerId: string, billId: string, update: UpdateBillDto) {
     const data = await this.BillModule.findOneAndUpdate(
       {
         restaurant: restaurantId,
-        _id: bill_id,
-        customer: customer_id,
+        _id: billId,
+        customer: customerId,
       },
       {
         $set: {
@@ -229,13 +219,11 @@ export class BillRepository {
     return data;
   }
 
-  // pending
-
-  async deleteSpecificBillOfSpecificCustomer(restaurantId: Types.ObjectId, customer_id: string, bill_id: string) {
+  async deleteSpecificBillOfSpecificCustomer(restaurantId: string, customerId: string, billId: string) {
     const data = await this.BillModule.findOneAndDelete({
       restaurant: restaurantId,
-      customer: customer_id,
-      _id: bill_id,
+      customer: customerId,
+      _id: billId,
     });
 
     return data;

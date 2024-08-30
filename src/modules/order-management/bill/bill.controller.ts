@@ -1,10 +1,8 @@
-import { Body, Controller, Delete, Get, Headers, HttpException, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import mongoose from 'mongoose';
-
-import { CustomerService } from '../../customer-management/customer/customer.service';
+import { UserDocument } from '../../user/user.schema';
 
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
@@ -18,138 +16,140 @@ import { GetUser } from '../../auth/decorators/get-user.decorator';
 import { ValidBillGuard } from '../../auth/guards/valid-bill.guard';
 import { ValidCustomerGuard } from '../../auth/guards/valid-customer.guard';
 
-@Controller('customer/:customer_id/bill')
+@Controller('customer/:customerId/bill')
 @ApiTags('Bill')
 @ApiSecurity('JWT-auth')
 @UseGuards(JwtAuthGuard, ValidRestaurantGuard, ValidCustomerGuard)
 export class BillController {
-  constructor(
-    private billService: BillService,
-    private customerService: CustomerService,
-  ) {}
+  constructor(private billService: BillService) {}
 
-  @Post('sessionStart')
-  async create(@Headers('restaurant_id') restaurant_id: string, @GetUser() user: string, @Param('customer_id') customer_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const validation = await this.billService.validationForAddBill(user);
-    if (validation) {
-      throw new HttpException('this bill session is already started', 404);
-    }
-    const data = await this.billService.create(restaurantId, user, customer_id);
+  @UsePipes(new ValidationPipe())
+  @HttpCode(200)
+  @Post('session-start')
+  async create(
+    @Headers('restaurantId') restaurantId: string,
+    @GetUser() currentUser: UserDocument,
+    @Param('customerId') customerId: string,
+  ) {
+    const data = await this.billService.create(restaurantId, currentUser, customerId);
     return data;
   }
 
+  @HttpCode(200)
   @UseGuards(ValidBillGuard)
-  @Patch(':bill_id/sessionEnd')
+  @Patch(':billId/session-end')
+  @UsePipes(new ValidationPipe())
   async put(
-    @Headers('restaurant_id') restaurant_id: string,
-    @GetUser() user: string,
-    @Param('customer_id') customer_id: string,
-    @Param('bill_id') bill_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @GetUser() currentUser: UserDocument,
+    @Param('customerId') customerId: string,
+    @Param('billId') billId: string,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.endBillSession(restaurantId, user, customer_id, bill_id);
+    const data = await this.billService.endBillSession(restaurantId, currentUser, customerId, billId);
     return data;
   }
 
+  @HttpCode(200)
   @UseGuards(ValidBillGuard)
-  @Patch(':bill_id/generateBill')
+  @Patch(':billId/generate-bill')
+  @UsePipes(new ValidationPipe())
   async generateBill(
-    @Headers('restaurant_id') restaurant_id: string,
-    @GetUser() user: string,
-    @Param('customer_id') customer_id: string,
-    @Param('bill_id') bill_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @GetUser() currentUser: UserDocument,
+    @Param('customerId') customerId: string,
+    @Param('billId') billId: string,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.generateBill(restaurantId, user, customer_id, bill_id);
+    const data = await this.billService.generateBill(restaurantId, currentUser, customerId, billId);
     return data;
   }
 
+  @HttpCode(200)
   @Get()
-  async getBills(@Headers('restaurant_id') restaurant_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  async getBills(@Headers('restaurant_id') restaurantId: string) {
     const data = await this.billService.getBills(restaurantId);
     return data;
   }
 
-  @Get(':id/specificBill')
-  async getSpecific(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.getSpecific(restaurantId, id);
+  @HttpCode(200)
+  @Get(':billId/specific-bill')
+  async getSpecific(@Headers('restaurant_id') restaurantId: string, @Param('billId') billId: string) {
+    const data = await this.billService.getSpecific(restaurantId, billId);
     return data;
   }
 
-  @Patch(':id')
-  async update(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string, @Body() updateBillDto: UpdateBillDto) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.update(restaurantId, id, updateBillDto);
+  @HttpCode(200)
+  @Patch(':billId')
+  @UsePipes(new ValidationPipe())
+  async update(@Headers('restaurant_id') restaurantId: string, @Param('billId') billId: string, @Body() updateBillDto: UpdateBillDto) {
+    const data = await this.billService.update(restaurantId, billId, updateBillDto);
     return data;
   }
 
-  @Delete(':id')
-  async delete(@Headers('restaurant_id') restaurant_id: string, @Param('id') id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  @HttpCode(200)
+  @Delete(':billId')
+  async delete(@Headers('restaurant_id') restaurantId: string, @Param('billId') id: string) {
     const data = await this.billService.delete(restaurantId, id);
     return data;
   }
 
-  @Get('activeBills')
-  async getActiveBills(@Headers('restaurant_id') restaurant_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  @HttpCode(200)
+  @Get('active-bill')
+  async getActiveBills(@Headers('restaurant_id') restaurantId: string) {
     const data = await this.billService.getActiveBills(restaurantId);
     return data;
   }
 
-  @Get('notActiveBills')
-  async getNotActiveBills(@Headers('restaurant_id') restaurant_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
+  @HttpCode(200)
+  @Get('not-active-bill')
+  async getNotActiveBills(@Headers('restaurant_id') restaurantId: string) {
     const data = await this.billService.getNotActiveBills(restaurantId);
     return data;
   }
 
+  @HttpCode(200)
   @Get('specific-customer')
-  async getBillsOfSpecificCustomer(@Headers('restaurant_id') restaurant_id: string, @Param('customer_id') customer_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.getBillsOfSpecificCustomer(restaurantId, customer_id);
+  async getBillsOfSpecificCustomer(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
+    const data = await this.billService.getBillsOfSpecificCustomer(restaurantId, customerId);
     return data;
   }
 
+  @HttpCode(200)
   @Get('active-bill/specific-customer')
-  async activeBillsOfSpecificCustomer(@Headers('restaurant_id') restaurant_id: string, @Param('customer_id') customer_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.getActiveBillsOfSpecificCustomer(restaurantId, customer_id);
+  async activeBillsOfSpecificCustomer(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
+    const data = await this.billService.getActiveBillsOfSpecificCustomer(restaurantId, customerId);
     return data;
   }
 
-  @Get('notActiveBill/specific-customer')
-  async notActiveBillsOfSpecificCustomer(@Headers('restaurant_id') restaurant_id: string, @Param('customer_id') customer_id: string) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.getNotActiveBillsOfSpecificCustomer(restaurantId, customer_id);
+  @HttpCode(200)
+  @Get('not-active-bill/specific-customer')
+  async notActiveBillsOfSpecificCustomer(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
+    const data = await this.billService.getNotActiveBillsOfSpecificCustomer(restaurantId, customerId);
     return data;
   }
 
+  @UsePipes(new ValidationPipe())
+  @HttpCode(200)
   @UseGuards(ValidBillGuard)
-  @Patch(':bill_id/specific-customer')
+  @Patch(':billId/specific-customer')
   async updateSpecificBillOfSpecificCustomer(
-    @Headers('restaurant_id') restaurant_id: string,
-    @Param('customer_id') customer_id: string,
-    @Param('bill_id') bill_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @Param('customerId') customerId: string,
+    @Param('billId') billId: string,
     @Body() updateBill: UpdateBillDto,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.updateSpecificBillOfSpecificCustomer(restaurantId, customer_id, bill_id, updateBill);
+    const data = await this.billService.updateSpecificBillOfSpecificCustomer(restaurantId, customerId, billId, updateBill);
     return data;
   }
 
+  @HttpCode(200)
   @UseGuards(ValidBillGuard)
-  @Delete(':bill_id/specific-customer')
+  @Delete(':billId/specific-customer')
   async deleteSpecificBillOfSpecificCustomer(
-    @Headers('restaurant_id') restaurant_id: string,
-    @Param('customer_id') customer_id: string,
-    @Param('bill_id') bill_id: string,
+    @Headers('restaurant_id') restaurantId: string,
+    @Param('customerId') customerId: string,
+    @Param('billId') billId: string,
   ) {
-    const restaurantId = new mongoose.Types.ObjectId(restaurant_id);
-    const data = await this.billService.deleteSpecificBillOfSpecificCustomer(restaurantId, customer_id, bill_id);
+    const data = await this.billService.deleteSpecificBillOfSpecificCustomer(restaurantId, customerId, billId);
     return data;
   }
 }
