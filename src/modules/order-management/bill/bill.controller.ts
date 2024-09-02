@@ -1,4 +1,18 @@
-import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
@@ -61,6 +75,15 @@ export class BillController {
   ) {
     const data = await this.billService.generateBill(restaurantId, currentUser, customerId, billId);
     return data;
+  }
+
+  @HttpCode(200)
+  @Get('list')
+  async getBillList(@Headers('restaurant_id') restaurantId: string, @Query('page') page: string, @Query('pageSize') pageSize: string) {
+    const pageNum = parseInt(page, 10) || 1;
+    const pageSizeNum = parseInt(pageSize, 10) || 20;
+    const getBillList = await this.billService.getBillList(restaurantId, pageNum, pageSizeNum);
+    return getBillList;
   }
 
   @HttpCode(200)

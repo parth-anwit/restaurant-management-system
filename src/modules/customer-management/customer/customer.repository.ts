@@ -33,8 +33,50 @@ export class CustomerRepository {
   }
 
   async get(restaurantId: string) {
-    const data = await this.CustomerModule.find({ restaurant: restaurantId }).exec();
-    return data;
+    const customerData = await this.CustomerModule.find({ restaurant: restaurantId }).exec();
+    return customerData;
+  }
+
+  async getList(restaurantId: string, page: number, pageSizeNum: number) {
+    const customer = await this.CustomerModule.aggregate([
+      {
+        $match: {
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurant',
+          foreignField: '_id',
+          as: 'restaurant_info',
+        },
+      },
+      {
+        $unwind: {
+          path: '$restaurant_info',
+        },
+      },
+      {
+        $project: {
+          restaurant: 0,
+          __v: 0,
+        },
+      },
+
+      {
+        $facet: {
+          metaData: [{ $count: 'totalCount' }],
+          data: [{ $skip: (page - 1) * pageSizeNum }, { $limit: pageSizeNum }],
+        },
+      },
+    ]);
+
+    return {
+      totalCount: customer[0].metaData[0]?.totalCount || 0,
+      data: customer[0].data,
+    };
   }
 
   async getSpecific(restaurantId: string, customerId: string) {

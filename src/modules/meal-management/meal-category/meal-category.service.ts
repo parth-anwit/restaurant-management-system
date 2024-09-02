@@ -28,6 +28,22 @@ export class MealCategoryService {
     };
   }
 
+  async getList(restaurantId: string, pageNum: number, pageSizeNum: number) {
+    const mealCategory = await this.mealCategoryRepository.getList(restaurantId, pageNum, pageSizeNum);
+
+    return {
+      success: true,
+      mealCategory: {
+        metaData: {
+          totalCount: mealCategory.totalCount,
+          page: pageNum,
+          pageSize: pageSizeNum,
+        },
+        data: mealCategory.mealCategoryListData,
+      },
+    };
+  }
+
   async get(restaurantId: string) {
     const data = await this.mealCategoryRepository.get(restaurantId);
     if (data.length === 0) {

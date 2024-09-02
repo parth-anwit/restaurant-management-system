@@ -10,6 +10,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   UsePipes,
   ValidationPipe,
@@ -44,9 +45,18 @@ export class MealCategoryController {
   }
 
   @HttpCode(200)
-  @Get('list')
+  @Post()
   async get(@Headers('restaurant_id') restaurantId: string) {
-    const data = await this.service.get(restaurantId);
+    const mealCategory = await this.service.get(restaurantId);
+    return mealCategory;
+  }
+
+  @HttpCode(200)
+  @Get('list')
+  async getList(@Headers('restaurant_id') restaurantId: string, @Query('page') page: string, @Query('pageSize') pageSize: string) {
+    const pageNum = parseInt(page, 10) || 1;
+    const pageSizeNum = parseInt(pageSize, 10) || 20;
+    const data = await this.service.getList(restaurantId, pageNum, pageSizeNum);
     return data;
   }
 

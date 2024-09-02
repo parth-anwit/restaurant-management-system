@@ -25,8 +25,36 @@ export class MealRepository {
   }
 
   async get(restaurantId: string) {
-    const data = await this.MealModule.find({ restaurant: restaurantId }).exec();
-    return data;
+    const meal = await this.MealModule.find({ restaurant: restaurantId }).exec();
+    return meal;
+  }
+
+  async getList(restaurantId: string, page: number, pageSize: number) {
+    const mealList = await this.MealModule.aggregate([
+      {
+        $match: {
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurant: 0,
+          __v: 0,
+        },
+      },
+      {
+        $facet: {
+          metaData: [{ $count: 'totalCount' }],
+          mealData: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    return {
+      totalCount: mealList[0].metaData[0]?.totalCount || 0,
+      mealListData: mealList[0].mealData,
+    };
   }
 
   async getSpecific(restaurantId: string, mealId: string) {

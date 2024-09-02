@@ -27,14 +27,27 @@ export class CustomerService {
   }
 
   async get(restaurantId: string) {
-    const data = await this.customerRepo.get(restaurantId);
+    const customer = await this.customerRepo.get(restaurantId);
+    return customer;
+  }
 
-    if (data.length === 0) {
+  async getList(restaurantId: string, pageNum: number, pageSizeNum: number) {
+    const customer = await this.customerRepo.getList(restaurantId, pageNum, pageSizeNum);
+
+    if (!customer) {
       throw new NotFoundException('no customer found');
     }
 
     return {
-      customer: data,
+      success: true,
+      customer: {
+        metaData: {
+          totalCount: customer.totalCount,
+          page: pageNum,
+          pageSize: pageSizeNum,
+        },
+        data: customer.data,
+      },
     };
   }
 

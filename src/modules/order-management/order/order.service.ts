@@ -28,6 +28,24 @@ export class OrderService {
     };
   }
 
+  async getOrderList(restaurantId: string, pageNum: number, pageSizeNum: number) {
+    const order = await this.orderRepository.getOrderList(restaurantId, pageNum, pageSizeNum);
+    if (!order) {
+      throw new NotFoundException('order not found');
+    }
+    return {
+      success: true,
+      bill: {
+        metaData: {
+          totalCount: order.totalCount,
+          page: pageNum,
+          pageSize: pageSizeNum,
+        },
+        data: order.orderDataList,
+      },
+    };
+  }
+
   async getSpecific(restaurantId: string, orderId: string) {
     idChecker(orderId);
 

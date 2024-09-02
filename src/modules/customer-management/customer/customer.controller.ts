@@ -1,5 +1,19 @@
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Delete, Get, Headers, HttpCode, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
@@ -27,9 +41,19 @@ export class CustomerController {
   }
 
   @HttpCode(200)
-  @Get('list')
+  @Get()
   async get(@Headers('restaurant_id') restaurantId: string) {
-    const data = await this.customerService.get(restaurantId);
+    const customer = await this.customerService.get(restaurantId);
+    return customer;
+  }
+
+  @HttpCode(200)
+  @Get('list')
+  async getList(@Headers('restaurant_id') restaurantId: string, @Query('page') page: string, @Query('pageSize') pageSize: string) {
+    const pageNum = parseInt(page, 10) || 1;
+    const pageSizeNum = parseInt(pageSize, 10) || 20;
+
+    const data = await this.customerService.getList(restaurantId, pageNum, pageSizeNum);
     return data;
   }
 

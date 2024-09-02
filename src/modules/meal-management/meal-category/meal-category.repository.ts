@@ -26,6 +26,33 @@ export class MealCategoryRepository {
     return data.save();
   }
 
+  async getList(restaurantId: string, page: number, pageSize: number) {
+    const mealCategoryList = await this.MealCategoryModule.aggregate([
+      {
+        $match: { restaurant: new mongoose.Types.ObjectId(restaurantId) },
+      },
+
+      {
+        $project: {
+          restaurant: 0,
+          __v: 0,
+        },
+      },
+
+      {
+        $facet: {
+          metaData: [{ $count: 'totalCount' }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    return {
+      totalCount: mealCategoryList[0].metaData[0]?.totalCount || 0,
+      mealCategoryListData: mealCategoryList[0].data,
+    };
+  }
+
   async get(restaurantId: string) {
     const data = await this.MealCategoryModule.find({ restaurant: restaurantId }).exec();
     return data;

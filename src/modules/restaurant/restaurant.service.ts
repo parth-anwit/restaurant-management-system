@@ -23,8 +23,17 @@ export class RestaurantService {
   }
 
   async get(currentUser: UserDocument) {
-    const data = await this.restaurantRepo.get(currentUser);
-    if (data.length === 0) {
+    const restaurant = await this.restaurantRepo.get(currentUser);
+    if (!restaurant) {
+      throw new NotFoundException('restaurant not found');
+    }
+
+    return restaurant;
+  }
+
+  async getList(currentUser: UserDocument, page: number, pageSize: number) {
+    const data = await this.restaurantRepo.getList(currentUser, page, pageSize);
+    if (!data) {
       throw new NotFoundException('restaurant not found');
     }
 

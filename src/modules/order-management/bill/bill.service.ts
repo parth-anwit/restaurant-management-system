@@ -71,6 +71,25 @@ export class BillService {
     };
   }
 
+  async getBillList(restaurantId: string, pageNum: number, pageSizeNum: number) {
+    const bill = await this.billRepo.getBillList(restaurantId, pageNum, pageSizeNum);
+    if (!bill) {
+      throw new NotFoundException('bill not found');
+    }
+
+    return {
+      success: true,
+      bill: {
+        metaData: {
+          totalCount: bill.totalCount,
+          page: pageNum,
+          pageSize: pageSizeNum,
+        },
+        data: bill.billDataList,
+      },
+    };
+  }
+
   async getBills(restaurantId: string) {
     const data = await this.billRepo.getBills(restaurantId);
     if (!data) {

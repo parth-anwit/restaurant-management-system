@@ -114,11 +114,45 @@ export class BillRepository {
     return data;
   }
 
+  async getBillList(restaurantId: string, page: number, pageSize: number) {
+    const bill = await this.BillModule.aggregate([
+      {
+        $match: { restaurant: new mongoose.Types.ObjectId(restaurantId) },
+      },
+
+      {
+        $facet: {
+          metaData: [{ $count: 'totalCount' }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    return {
+      totalCount: bill[0].metaData[0]?.totalCount || 0,
+      billDataList: bill[0].data,
+    };
+  }
+
   async getBills(restaurantId: string) {
-    const data = await this.BillModule.find({ restaurant: restaurantId })
-      .populate('restaurant', '-_id -__v')
-      .populate('customer', '-_id -__v -restaurant');
-    return data;
+    const bill = await this.BillModule.aggregate([
+      {
+        $match: {
+          restaurant: restaurantId,
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurant',
+          foreignField: '_id',
+          as: 'restaurant_info',
+        },
+      },
+    ]);
+
+    return bill;
   }
 
   async update(restaurantId: string, billId: string, updateDto: UpdateBillDto) {

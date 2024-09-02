@@ -1,6 +1,6 @@
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
@@ -31,6 +31,15 @@ export class OrderController {
   ) {
     const data = await this.orderService.create(restaurantId, customerId, billId, createDto);
     return data;
+  }
+
+  @Get('list')
+  async getOrderList(@Headers('restaurant_id') restaurantId: string, @Query('page') page: string, @Query('pageSize') pageSize: string) {
+    const pageNum = parseInt(page, 10) || 1;
+    const pageSizeNum = parseInt(pageSize, 10) || 20;
+
+    const order = await this.orderService.getOrderList(restaurantId, pageNum, pageSizeNum);
+    return order;
   }
 
   @Get(':orderId/specific')

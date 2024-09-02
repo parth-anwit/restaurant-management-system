@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
@@ -31,8 +31,28 @@ export class RestaurantController {
   @Get()
   async get(@GetUser() currentUser: UserDocument) {
     const restaurant = await this.restaurantService.get(currentUser);
-
     return restaurant;
+  }
+
+  @HttpCode(200)
+  @Get('list')
+  async getList(@GetUser() currentUser: UserDocument, @Query('page') page: string, @Query('pageSize') pageSize: string) {
+    const pageNum = parseInt(page, 10) || 1;
+    const pageSizeNum = parseInt(pageSize, 10) || 50;
+
+    const restaurant = await this.restaurantService.getList(currentUser, pageNum, pageSizeNum);
+
+    return {
+      success: true,
+      restaurant: {
+        metaData: {
+          totalCount: restaurant.totalCount,
+          page: pageNum,
+          pageSize: pageSizeNum,
+        },
+        data: restaurant.data,
+      },
+    };
   }
 
   @HttpCode(200)

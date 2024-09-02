@@ -30,6 +30,25 @@ export class OrderRepository {
     return data.save();
   }
 
+  async getOrderList(restaurantId: string, page: number, pageSize: number) {
+    const order = await this.OrderModule.aggregate([
+      {
+        $match: { restaurant: new mongoose.Types.ObjectId(restaurantId) },
+      },
+      {
+        $facet: {
+          metaData: [{ $count: 'totalCount' }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    return {
+      totalCount: order[0].metaData[0]?.totalCount || 0,
+      orderDataList: order[0].data,
+    };
+  }
+
   async getSpecific(restaurantId: string, orderId: string) {
     const data = await this.OrderModule.findOne({ restaurant: restaurantId, _id: orderId });
     return data;

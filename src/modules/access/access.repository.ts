@@ -1,7 +1,7 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 
 import { Access } from './access.schema';
 import { UserDocument } from '../user/user.schema';
@@ -21,9 +21,64 @@ export class AccessRepository {
     return data;
   }
 
-  async findRestaurantOfCurrentUser(currentUser: UserDocument) {
-    const data = await this.AccessModule.find({ user: currentUser.id }).populate('restaurant');
-    return data;
+  async getRestaurant(currentUser: UserDocument) {
+    const restaurant = await this.AccessModule.aggregate([
+      { $match: { user: new mongoose.Types.ObjectId(currentUser.id) } },
+      { $lookup: { from: 'restaurants', localField: 'restaurant', foreignField: '_id', as: 'restaurant_info' } },
+      { $unwind: { path: '$restaurant_info' } },
+      { $replaceRoot: { newRoot: '$restaurant_info' } },
+      { $project: { _id: 0, user: 0, restaurant: 0, role: 0, __v: 0 } },
+    ]);
+    return restaurant;
+  }
+
+  async findRestaurantOfCurrentUser(currentUser: UserDocument, page: number, pageSize: number) {
+    const restaurant = await this.AccessModule.aggregate([
+      {
+        $match: {
+          user: new mongoose.Types.ObjectId(currentUser.id),
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurant',
+          foreignField: '_id',
+          as: 'restaurant_info',
+        },
+      },
+      {
+        $unwind: {
+          path: '$restaurant_info',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $replaceRoot: { newRoot: '$restaurant_info' },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          user: 0,
+          restaurant: 0,
+          role: 0,
+          __v: 0,
+        },
+      },
+      {
+        $facet: {
+          metadata: [{ $count: 'totalCount' }],
+          data: [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }],
+        },
+      },
+    ]);
+
+    return {
+      totalCount: restaurant[0]?.metadata[0]?.totalCount || 0,
+      data: restaurant[0]?.data || [],
+    };
   }
 
   async getUserAccess(userId: string) {

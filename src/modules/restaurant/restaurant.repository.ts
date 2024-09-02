@@ -28,10 +28,13 @@ export class RestaurantRepository {
   }
 
   async get(currentUser: UserDocument) {
-    const getRestaurant = await this.accessRepo.findRestaurantOfCurrentUser(currentUser);
+    const restaurant = await this.accessRepo.getRestaurant(currentUser);
+    return restaurant;
+  }
 
-    // get the restaurant from accessData
-    return getRestaurant.map((x) => x.restaurant);
+  async getList(currentUser: UserDocument, page: number, pageSize: number) {
+    const getRestaurant = await this.accessRepo.findRestaurantOfCurrentUser(currentUser, page, pageSize);
+    return getRestaurant;
   }
 
   async getSpecificRestaurant(id: string) {
