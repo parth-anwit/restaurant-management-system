@@ -146,4 +146,12 @@ export class OrderService {
       data,
     };
   }
+
+  async findPopular_Meal_MealCategory(monthNum: number) {
+    const data = await this.orderRepository.findPopular_Meal_MealCategory(monthNum);
+
+    return {
+      data,
+    };
+  }
 }

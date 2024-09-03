@@ -22,6 +22,7 @@ import {
   UnauthorizedExceptionFilter,
   ValidationExceptionFilter,
 } from './filters';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BillModule } from './modules/order-management/bill/bill.module';
 import { CustomerManagementModule } from './modules/customer-management/customer-management.module';
@@ -73,6 +74,7 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     OrderManagementModule,
     ResourceModule,
     CustomerManagementModule,
+    AnalyticsModule,
   ],
   controllers: [AppController], // Define the application's controller
   providers: [

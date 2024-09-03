@@ -113,4 +113,48 @@ export class OrderRepository {
     });
     return data;
   }
+
+  async findPopular_Meal_MealCategory(month: number) {
+    const data = await this.OrderModule.aggregate([
+      {
+        $lookup: {
+          from: 'bills',
+          localField: 'bill',
+          foreignField: '_id',
+          as: 'bill_info',
+        },
+      },
+      {
+        $unwind: '$bill_info',
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: [{ $month: '$bill_info.endTime' }, month],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            meal: '$meal',
+            mealCategory: '$mealCategory',
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+      {
+        $project: {
+          _id: 0,
+          meal: '$_id.meal',
+          mealCategory: '$_id.mealCategory',
+          count: 1,
+        },
+      },
+    ]);
+    return data;
+  }
 }

@@ -35,6 +35,7 @@ export class BillRepository {
       _id: billId,
       isBillGenerated: false,
     });
+
     if (!data) {
       throw new HttpException('Session is not starting yet', 404);
     }
@@ -51,6 +52,7 @@ export class BillRepository {
           discount: 10,
         },
       },
+      { new: true },
     );
 
     if (!endSession) {
@@ -138,7 +140,7 @@ export class BillRepository {
     const bill = await this.BillModule.aggregate([
       {
         $match: {
-          restaurant: restaurantId,
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
         },
       },
 
@@ -261,5 +263,147 @@ export class BillRepository {
     });
 
     return data;
+  }
+
+  async findPopularMeal(monthNum: number) {
+    const data = await this.BillModule.aggregate([
+      {
+        $match: {
+          $expr: {
+            $eq: [{ $month: '$endTime' }, monthNum],
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id: '$title',
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+          titles: {
+            $split: ['$_id', '\n'],
+          },
+        },
+      },
+
+      {
+        $unwind: '$titles',
+      },
+
+      {
+        $group: {
+          _id: '$titles',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+
+      {
+        $group: {
+          _id: null,
+          repeatedItem: {
+            $push: { meal: '$_id', orderCount: '$count' },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          repeatedItem: 1,
+          totalCount: 1,
+        },
+      },
+    ]);
+    return data;
+  }
+
+  async avgSpendCustomerOnBill(restaurantId: string) {
+    const customer = await this.BillModule.aggregate([
+      {
+        $match: {
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
+        },
+      },
+      {
+        $group: {
+          _id: '$customer',
+          totalSpend: { $sum: '$total' },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          averageSpend: { $avg: '$totalSpend' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+    ]);
+    return customer;
+  }
+
+  async customerComeMost(restaurantId: string) {
+    const customer = await this.BillModule.aggregate([
+      {
+        $match: {
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
+        },
+      },
+      {
+        $group: {
+          _id: '$customer',
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { count: -1 },
+      },
+    ]);
+    return customer;
+  }
+
+  async customerSpendMoreMoney(restaurantId: string) {
+    const customer = await this.BillModule.aggregate([
+      {
+        $match: {
+          restaurant: new mongoose.Types.ObjectId(restaurantId),
+        },
+      },
+
+      {
+        $group: {
+          _id: '$customer',
+          totalSpend: { $sum: '$total' },
+        },
+      },
+      {
+        $sort: {
+          totalSpend: -1,
+        },
+      },
+
+      {
+        $group: {
+          _id: null,
+          Most_Spend_Money: { $push: { customerId: '$_id', moneySpend: '$totalSpend' } },
+        },
+      },
+
+      {
+        $project: {
+          _id: 0,
+        },
+      },
+    ]);
+    return customer;
   }
 }

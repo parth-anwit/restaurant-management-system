@@ -1,6 +1,20 @@
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+  UsePipes,
+  ValidationPipe,
+} from '@nestjs/common';
 
 import { ValidRestaurantGuard } from '../../auth/guards/valid-restaurant.guard';
 
@@ -21,6 +35,7 @@ import { ValidCustomerGuard } from '../../auth/guards/valid-customer.guard';
 export class OrderController {
   constructor(private orderService: OrderService) {}
 
+  @HttpCode(200)
   @Post()
   @UsePipes(new ValidationPipe())
   async create(
@@ -33,6 +48,7 @@ export class OrderController {
     return data;
   }
 
+  @HttpCode(200)
   @Get('list')
   async getOrderList(@Headers('restaurant_id') restaurantId: string, @Query('page') page: string, @Query('pageSize') pageSize: string) {
     const pageNum = parseInt(page, 10) || 1;
@@ -42,30 +58,35 @@ export class OrderController {
     return order;
   }
 
+  @HttpCode(200)
   @Get(':orderId/specific')
   async getSpecific(@Headers('restaurant_id') restaurantId: string, @Param('orderId') orderId: string) {
     const data = await this.orderService.getSpecific(restaurantId, orderId);
     return data;
   }
 
+  @HttpCode(200)
   @Patch(':orderId')
   async update(@Headers('restaurant_id') restaurantId: string, @Param('orderId') orderId: string, @Body() updateOrderDto: UpdateOrderDto) {
     const data = await this.orderService.update(restaurantId, orderId, updateOrderDto);
     return data;
   }
 
+  @HttpCode(200)
   @Delete(':orderId')
   async delete(@Headers('restaurant_id') restaurantId: string, @Param('orderId') orderId: string) {
     const data = await this.orderService.delete(restaurantId, orderId);
     return data;
   }
 
+  @HttpCode(200)
   @Get('specific-customer')
   async getAllOrdersOfSpecificCustomer(@Headers('restaurant_id') restaurantId: string, @Param('customerId') customerId: string) {
     const data = await this.orderService.getOrderOfSpecificCustomer(restaurantId, customerId);
     return data;
   }
 
+  @HttpCode(200)
   @Patch(':orderId/specific-customer')
   async updateSpecificOrderOfSpecificCustomer(
     @Headers('restaurant_id') restaurantId: string,
@@ -77,6 +98,7 @@ export class OrderController {
     return data;
   }
 
+  @HttpCode(200)
   @Delete(':orderId/specific-customer')
   async deleteSpecificOrderOfSpecificCustomer(
     @Headers('restaurant_id') restaurantId: string,
@@ -85,5 +107,13 @@ export class OrderController {
   ) {
     const data = await this.orderService.deleteSpecificOrderOfSpecificCustomer(restaurantId, customerId, orderId);
     return data;
+  }
+
+  @HttpCode(200)
+  @Get('/popular-meal-mealCategory')
+  async findPopularMeal(@Query('month') month: string) {
+    const monthNum = parseInt(month, 10) || 1;
+    const bill = await this.orderService.findPopular_Meal_MealCategory(monthNum);
+    return bill;
   }
 }

@@ -41,7 +41,7 @@ export class BillController {
   @HttpCode(200)
   @Post('session-start')
   async create(
-    @Headers('restaurantId') restaurantId: string,
+    @Headers('restaurant_id') restaurantId: string,
     @GetUser() currentUser: UserDocument,
     @Param('customerId') customerId: string,
   ) {
@@ -150,9 +150,9 @@ export class BillController {
     return data;
   }
 
-  @UsePipes(new ValidationPipe())
   @HttpCode(200)
   @UseGuards(ValidBillGuard)
+  @UsePipes(new ValidationPipe())
   @Patch(':billId/specific-customer')
   async updateSpecificBillOfSpecificCustomer(
     @Headers('restaurant_id') restaurantId: string,
@@ -174,5 +174,34 @@ export class BillController {
   ) {
     const data = await this.billService.deleteSpecificBillOfSpecificCustomer(restaurantId, customerId, billId);
     return data;
+  }
+
+  @HttpCode(200)
+  @Get('/popular-meal-mealCategory')
+  async findPopularMeal(@Query('month') month: string) {
+    const monthNum = parseInt(month, 10) || 1;
+    const bill = await this.billService.findPopularMeal(monthNum);
+    return bill;
+  }
+
+  @HttpCode(200)
+  @Get('avg-spend-customer')
+  async avgSpendCustomerOnBill(@Headers('restaurant_id') restaurantId: string) {
+    const customer = await this.billService.avgSpendCustomerOnBill(restaurantId);
+    return customer;
+  }
+
+  @HttpCode(200)
+  @Get('customer-come-most')
+  async customerComeMost(@Headers('restaurant_id') restaurantId: string) {
+    const customer = await this.billService.customerComeMost(restaurantId);
+    return customer;
+  }
+
+  @HttpCode(200)
+  @Get('customer-spend-more-money')
+  async customerSpendMoreMoney(@Headers('restaurant_id') restaurantId: string) {
+    const customer = await this.billService.customerSpendMoreMoney(restaurantId);
+    return customer;
   }
 }
