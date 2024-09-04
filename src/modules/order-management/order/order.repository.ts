@@ -25,6 +25,7 @@ export class OrderRepository {
       bill: new mongoose.Types.ObjectId(billId),
       quantity,
       notes,
+      orderPlacedTime: new Date(),
     });
 
     return data.save();
@@ -114,26 +115,26 @@ export class OrderRepository {
     return data;
   }
 
-  async findPopular_Meal_MealCategory(month: number) {
+  async findPopular_Meal_MealCategory(month: number, timeZone: string) {
     const data = await this.OrderModule.aggregate([
       {
-        $lookup: {
-          from: 'bills',
-          localField: 'bill',
-          foreignField: '_id',
-          as: 'bill_info',
+        $addFields: {
+          date: {
+            $dateFromString: {
+              dateString: { $substr: ['$orderPlacedTime', 0, 19] },
+              timezone: timeZone,
+            },
+          },
         },
-      },
-      {
-        $unwind: '$bill_info',
       },
       {
         $match: {
           $expr: {
-            $eq: [{ $month: '$bill_info.endTime' }, month],
+            $eq: [{ $month: '$orderPlacedTime' }, month],
           },
         },
       },
+
       {
         $group: {
           _id: {
@@ -147,10 +148,39 @@ export class OrderRepository {
         $sort: { count: -1 },
       },
       {
+        $lookup: {
+          from: 'meals',
+          localField: '_id.meal',
+          foreignField: '_id',
+          as: 'meal_info',
+        },
+      },
+      {
+        $unwind: {
+          path: '$meal_info',
+        },
+      },
+      {
+        $lookup: {
+          from: 'mealcategories',
+          localField: '_id.mealCategory',
+          foreignField: '_id',
+          as: 'mealCategory_info',
+        },
+      },
+      {
+        $unwind: {
+          path: '$mealCategory_info',
+        },
+      },
+      {
+        $limit: 10,
+      },
+      {
         $project: {
           _id: 0,
-          meal: '$_id.meal',
-          mealCategory: '$_id.mealCategory',
+          meal: '$meal_info.name',
+          mealCategory: '$mealCategory_info.name',
           count: 1,
         },
       },

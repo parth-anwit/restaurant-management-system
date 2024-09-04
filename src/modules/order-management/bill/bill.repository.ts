@@ -351,7 +351,7 @@ export class BillRepository {
     return customer;
   }
 
-  async customerComeMost(restaurantId: string) {
+  async customerSpendMoreTime(restaurantId: string) {
     const customer = await this.BillModule.aggregate([
       {
         $match: {
@@ -359,51 +359,60 @@ export class BillRepository {
         },
       },
       {
+        $lookup: {
+          from: 'customers',
+          localField: 'customer',
+          foreignField: '_id',
+          as: 'customer_info',
+        },
+      },
+      {
+        $unwind: '$customer_info',
+      },
+      {
         $group: {
-          _id: '$customer',
+          _id: '$customer_info.name',
+          timeSpend: { $sum: { $subtract: ['$endTime', '$startTime'] } },
           count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { count: -1 },
-      },
-    ]);
-    return customer;
-  }
-
-  async customerSpendMoreMoney(restaurantId: string) {
-    const customer = await this.BillModule.aggregate([
-      {
-        $match: {
-          restaurant: new mongoose.Types.ObjectId(restaurantId),
-        },
-      },
-
-      {
-        $group: {
-          _id: '$customer',
           totalSpend: { $sum: '$total' },
         },
       },
       {
         $sort: {
-          totalSpend: -1,
+          timeSpend: -1,
         },
       },
-
       {
         $group: {
           _id: null,
-          Most_Spend_Money: { $push: { customerId: '$_id', moneySpend: '$totalSpend' } },
+          Time_Spend: { $push: { customerId: '$_id', timeSpend: '$timeSpend', numberOfTimes: '$count', totalSpend: '$totalSpend' } },
         },
       },
 
       {
         $project: {
           _id: 0,
+          numberOfTimes: '$count',
+          totalSpend: '$totalSpend',
+          Time_Spend: {
+            $map: {
+              input: '$Time_Spend',
+              as: 'item',
+              in: {
+                customerId: '$$item.customerId',
+                numberOfTimes: '$$item.numberOfTimes',
+                totalSpend: '$$item.totalSpend',
+                timeSpend: '$$item.timeSpend',
+                hours: { $floor: { $divide: ['$$item.timeSpend', 3600000] } },
+                minutes: { $floor: { $divide: [{ $mod: ['$$item.timeSpend', 3600000] }, 60000] } },
+                seconds: { $floor: { $divide: [{ $mod: ['$$item.timeSpend', 60000] }, 1000] } },
+              },
+            },
+          },
         },
       },
     ]);
+
     return customer;
   }
 }

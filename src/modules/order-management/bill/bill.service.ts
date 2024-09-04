@@ -256,13 +256,8 @@ export class BillService {
     };
   }
 
-  async customerComeMost(restaurantId: string) {
-    const customer = await this.billRepo.customerComeMost(restaurantId);
-    return { message: 'List of customers who come most at restaurant', customer };
-  }
-
-  async customerSpendMoreMoney(restaurantId: string) {
-    const customer = await this.billRepo.customerSpendMoreMoney(restaurantId);
-    return { message: 'List of customer who have spend more money at our restaurant', customer };
+  async customerSpendMoreTime(restaurantId: string) {
+    const customerTimeSpendData = await this.billRepo.customerSpendMoreTime(restaurantId);
+    return { message: 'List of customers who spend time at our restaurant', customerTimeSpendData };
   }
 }

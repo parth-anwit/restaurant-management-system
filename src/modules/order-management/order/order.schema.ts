@@ -29,6 +29,9 @@ export class Order {
 
   @Prop({ required: true })
   notes: string;
+
+  @Prop()
+  orderPlacedTime: Date;
 }
 
 export type OrderDocument = Order & Document;

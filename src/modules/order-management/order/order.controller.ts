@@ -108,12 +108,4 @@ export class OrderController {
     const data = await this.orderService.deleteSpecificOrderOfSpecificCustomer(restaurantId, customerId, orderId);
     return data;
   }
-
-  @HttpCode(200)
-  @Get('/popular-meal-mealCategory')
-  async findPopularMeal(@Query('month') month: string) {
-    const monthNum = parseInt(month, 10) || 1;
-    const bill = await this.orderService.findPopular_Meal_MealCategory(monthNum);
-    return bill;
-  }
 }

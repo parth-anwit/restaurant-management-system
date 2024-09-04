@@ -147,10 +147,11 @@ export class OrderService {
     };
   }
 
-  async findPopular_Meal_MealCategory(monthNum: number) {
-    const data = await this.orderRepository.findPopular_Meal_MealCategory(monthNum);
+  async findPopular_Meal_MealCategory(monthNum: number, timeZone: string) {
+    const data = await this.orderRepository.findPopular_Meal_MealCategory(monthNum, timeZone);
 
     return {
+      message: `popular meal and mealCategory of month ${monthNum}`,
       data,
     };
   }
